@@ -8,7 +8,7 @@ begin
  begin execute command; exception when others then get stacked diagnostics actual=returned_sqlstate; end;
  perform pg_temp.assert(actual=expected_state,label||' SQLSTATE='||coalesce(actual,'success'));
 end $$;
-select pg_temp.assert((select count(*)=12 from pg_tables where schemaname='public' and rowsecurity),'All 12 public tables enable RLS');
+select pg_temp.assert((select count(*)=13 from pg_tables where schemaname='public' and rowsecurity),'All 13 public tables enable RLS');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000003',true);
 select pg_temp.assert((select count(*)=1 from public.offices),'agent sees one office');
@@ -45,8 +45,9 @@ values('40000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000
 update public.properties set updated_at='2000-01-01' where id='40000000-0000-0000-0000-000000000099';
 select pg_temp.assert((select updated_at>'2000-01-02' from public.properties where id='40000000-0000-0000-0000-000000000099'),'updated_at cannot be forged');
 select pg_temp.denied($q$insert into public.properties(id,office_id,assigned_staff_id,title,property_type,transaction_type,price) values('40000000-0000-0000-0000-000000000099','10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000003','duplicate','house','sale',10)$q$,'23505','duplicate primary key rejected');
-with removed as (delete from public.properties where id='40000000-0000-0000-0000-000000000099' returning id)
-select pg_temp.assert((select count(*)=1 from removed),'own unreferenced property deletion allowed');
+select pg_temp.denied($q$delete from public.properties where id='40000000-0000-0000-0000-000000000099'$q$,'42501','hard property deletion blocked');
+select public.soft_delete_property('40000000-0000-0000-0000-000000000099',2);
+select pg_temp.assert((select count(*)=0 from public.properties where id='40000000-0000-0000-0000-000000000099' and deleted_at is null),'soft-deleted property excluded from active queries');
 with removed as (delete from public.tasks where assigned_staff_id='30000000-0000-0000-0000-000000000004' returning id)
 select pg_temp.assert((select count(*)=0 from removed),'colleague deletion blocked');
 with removed as (delete from public.tasks where office_id='10000000-0000-0000-0000-000000000002' returning id)

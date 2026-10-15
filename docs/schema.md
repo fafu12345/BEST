@@ -32,4 +32,8 @@
 | contracts | property_id, customer_id, contract_number, amount, signed_at, status, notes |
 | tasks | customer_id, property_id, title, due_at, status, notes |
 
-공통: 모든 테이블은 UUID id, created_at, updated_at을 갖습니다. offices 외에는 office_id가 있고, 직원·초대 외의 업무 테이블에는 assigned_staff_id가 있습니다. 금액은 원 단위 numeric(16,0), 면적은 제곱미터 numeric(12,2), 날짜 시각은 timestamptz입니다. 계약일만 date입니다. 선택/필수 및 열거 값의 전체 정의는 마이그레이션 SQL을 참고하세요.
+1단계 기본 테이블 공통: 모든 테이블은 UUID id, created_at, updated_at을 갖습니다. offices 외에는 office_id가 있고, 직원·초대 외의 업무 테이블에는 assigned_staff_id가 있습니다. 금액은 원 단위 numeric(16,0), 면적은 제곱미터 numeric(12,2), 날짜 시각은 timestamptz입니다. 계약일만 date입니다. 선택/필수 및 열거 값의 전체 정의는 마이그레이션 SQL을 참고하세요.
+
+## 2단계 확장
+
+기본 12개 테이블과 데이터를 유지하고 매물 변경 이력 테이블 1개를 추가했습니다. 전체 필드·권한·소프트 삭제 정책은 [2단계 명세](property-management.md)를 참고하세요.
