@@ -1,0 +1,4 @@
+import {expirationContext,workflowTarget,dbFailure} from '@/lib/expiration/server';
+import {workflowInput} from '@/lib/expiration/shared';
+type C={params:Promise<{id:string}>};
+export async function PATCH(request:Request,{params}:C){const c=await expirationContext(request);if(c.error)return c.error;const target=await workflowTarget(c,(await params).id,true);if(target.error)return target.error;const parsed=workflowInput.safeParse(await request.json().catch(()=>null));if(!parsed.success)return Response.json({error:parsed.error.issues[0].message},{status:400});const {version,...v}=parsed.data;const r=await c.db.from('contract_followups').update(v).eq('id',target.workflow.id).eq('version',version).select('id,version').maybeSingle();if(r.error)return dbFailure(r.error);if(!r.data)return dbFailure({code:'40001'});return Response.json(r.data);}

@@ -1,0 +1,3 @@
+import {expirationContext,workflowTarget,dbFailure} from '@/lib/expiration/server';
+import {reviewInput} from '@/lib/expiration/shared';
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){const c=await expirationContext(request);if(c.error)return c.error;const t=await workflowTarget(c,(await params).id,true);if(t.error)return t.error;const p=reviewInput.safeParse(await request.json().catch(()=>null));if(!p.success)return Response.json({error:p.error.issues[0].message},{status:400});const r=await c.db.rpc('review_reletting',{p_contract:t.contract.id,p_version:p.data.version,p_property_version:p.data.property_version,p_status:p.data.property_status,p_note:p.data.note});return r.error?dbFailure(r.error):Response.json({ok:true});}

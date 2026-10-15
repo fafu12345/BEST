@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {notFound,redirect} from 'next/navigation';
+import {expirationContext,workflowTarget} from '@/lib/expiration/server';
+import {RelocationForm} from '@/components/expiration/relocation-form';
+import {contractPropertyLabel} from '@/lib/contracts/display';
+export default async function Page({searchParams}:{searchParams:Promise<{contract?:string}>}){const c=await expirationContext();if(c.error)redirect('/login');const {contract}=await searchParams;if(!contract)return <section className="panel"><h1 className="section-title">현재 계약을 선택하세요.</h1><Link className="btn-primary" href="/dashboard/expiration">만기 목록</Link></section>;const t=await workflowTarget(c,contract,true);if(t.error){if(t.error.status===404)notFound();return <p className="panel">{(await t.error.json()).error}</p>;}
+ const [parties,staff,p]=await Promise.all([c.db.from('contract_parties').select('customer_id,name_snapshot,role').eq('contract_id',contract),c.db.from('staff').select('id,display_name,role,active').order('display_name'),c.db.from('properties').select('*').eq('id',t.contract.property_id).single()]);if(parties.error||staff.error||p.error)throw new Error('이전 입력 정보 조회 실패');return <div className="mx-auto max-w-4xl"><h1 className="mb-3 text-3xl font-bold">이전 희망 등록</h1><p className="mb-6 text-sm">현재 계약: {contractPropertyLabel(p.data)}</p><RelocationForm contractId={contract} parties={parties.data} staff={c.staff} colleagues={staff.data}/></div>;}

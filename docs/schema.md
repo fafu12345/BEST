@@ -55,3 +55,12 @@
 기존 contracts를 재사용하며 과거 amount/signed_at/customer_id와 ID·담당자를 보존한다. 신규 계약의 체결 금액, 일정, 6개 상태, 이전 계약 연결, 버전과 매물 상태 검토를 확장했다. contract_parties/contract_events/contract_documents 3개 테이블이 추가되어 현재 공개 업무 테이블은 17개이며 모두 RLS다. contract_directory는 호출자 권한으로 검색·고객 연결·과거 날짜를 조회하는 security_invoker 뷰다.
 
 정확한 필드·제약·권한·원자 저장·서류 감사 정책은 [4단계 계약관리 안내](contract-management.md)를 참조한다. 기존 001~007 마이그레이션은 변경하지 않는다. 계약 금액·당사자 역할을 현재 매물·고객 정보에서 소급 추정하지 않는다. 비공개 contract-documents 버킷은 인증 다운로드마다 DB 접근 승인을 기록하며 원본 덮어쓰기·삭제·서명 URL을 차단한다.
+
+## 5단계 추가 (011)
+
+기존 contracts와 contract_events를 유지하고 contract_followups, expiration_tasks,
+contract_renewals, relocation_cases 4개를 더해 공개 업무 테이블은 총 21개입니다.
+계약 기간·상태·담당자 변경 시 미완료 만기 업무를 동기화하고 완료/연락/갱신 이력은 유지합니다.
+모든 새 테이블은 office_id 복합 FK, RLS, 인덱스와 불변/버전/담당자 검증을 포함합니다.
+expiration_directory는 호출자 RLS를 적용하는 SECURITY INVOKER 뷰입니다.
+정확한 필드는 011 SQL, 흐름과 제약은 [5단계 안내](expiration-management.md)를 참고하세요.

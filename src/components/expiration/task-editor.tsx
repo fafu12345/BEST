@@ -1,0 +1,10 @@
+'use client';
+import {useState,type FormEvent} from 'react';
+import {useRouter} from 'next/navigation';
+import {taskStatuses,type ExpirationTask} from '@/lib/expiration/shared';
+export function TaskEditor({task,editable}:{task:ExpirationTask;editable:boolean}){
+ const [pending,setPending]=useState(false);const [error,setError]=useState('');const router=useRouter();
+ async function save(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);setPending(true);setError('');try{const r=await fetch('/api/expiration/tasks/'+task.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:task.version,scheduled_date:f.get('scheduled_date'),status:f.get('status'),completion_note:f.get('completion_note')})});if(!r.ok)throw new Error((await r.json()).error);router.refresh();}catch(e){setError(e instanceof Error?e.message:'업무 저장 실패');}finally{setPending(false);}}
+ if(!editable||['completed','cancelled'].includes(task.status))return <p className="text-sm">{taskStatuses[task.status]} · {task.scheduled_date}{task.completion_note?' · '+task.completion_note:''}</p>;
+ return <details className="mt-3"><summary className="cursor-pointer text-sm text-teal-800">기준일·업무 상태 변경</summary><form onSubmit={save} className="mt-3 grid gap-3"><fieldset disabled={pending} className="grid gap-3 sm:grid-cols-2"><label className="field">알림 예정일<input name="scheduled_date" type="date" required defaultValue={task.scheduled_date}/></label><label className="field">업무 상태<select name="status" defaultValue={task.status}>{['pending','in_progress','completed'].map(s=><option key={s} value={s}>{taskStatuses[s as keyof typeof taskStatuses]}</option>)}</select></label><label className="field sm:col-span-2">처리 메모<input name="completion_note" maxLength={2000} defaultValue={task.completion_note}/></label><button className="btn-secondary">{pending?'저장 중…':'업무 저장'}</button></fieldset>{error&&<p role="alert" className="text-sm text-red-700">{error}</p>}</form></details>;
+}

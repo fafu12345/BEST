@@ -1,0 +1,5 @@
+import {expirationContext,dbFailure} from '@/lib/expiration/server';
+import {taskInput} from '@/lib/expiration/shared';
+import {canEdit} from '@/lib/properties/shared';
+import {validId} from '@/lib/properties/server';
+export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){const c=await expirationContext(request);if(c.error)return c.error;const {id}=await params;if(!validId(id))return new Response(null,{status:404});const t=await c.db.from('expiration_tasks').select('*').eq('id',id).maybeSingle();if(t.error)return dbFailure(t.error);if(!t.data)return new Response(null,{status:404});if(!canEdit(c.staff,t.data))return dbFailure({code:'42501'});const p=taskInput.safeParse(await request.json().catch(()=>null));if(!p.success)return Response.json({error:p.error.issues[0].message},{status:400});const {version,...v}=p.data;const r=await c.db.from('expiration_tasks').update(v).eq('id',id).eq('version',version).select('id,version').maybeSingle();if(r.error)return dbFailure(r.error,'완료한 업무는 변경할 수 없습니다.');if(!r.data)return dbFailure({code:'40001'});return Response.json(r.data);}
