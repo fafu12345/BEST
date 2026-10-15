@@ -41,3 +41,7 @@
 ## 005 매물 입력 확장
 
 `properties.bathroom_count`는 nullable integer(0~100), `desired_transaction_date`는 nullable date, `desired_transaction_note`는 최대 500자 text(기본 빈 문자열)입니다. 기존 행의 날짜·화장실 수는 미입력 상태로 보존합니다. 기존 주소 컬럼과 RLS는 유지하며 아파트·오피스텔 화면에서 주소 입력만 생략합니다. 희망 일정은 확정 계약의 만기·잔금일과 별도입니다. v2.0 계약 구조는 [전환 분석서](v2-development-plan.md)의 3단계 계획을 참조하세요.
+
+## 006 고객관리 확장
+
+기존 customers의 id/office_id/assigned_staff_id와 연락처·상태·메모를 유지합니다. 개인·법인 구분, 법인명, 연락 동의 및 기록시각, 다음 연락일, 개인정보 처리 근거·목적·기한, 소프트 보관·버전과 검색용 생성 컬럼을 추가합니다. consultations는 contact_method를 추가하고 기존 FK·상담 내용을 보존합니다. 고객 역할을 고정하지 않으며 계약 연결은 다음 단계입니다. 상세 필드·인덱스·보관·RLS와 security_invoker 파생 뷰는 [고객관리 DB 안내](customer-management.md)를 참조하세요. 공개 업무 테이블 수는 14개로 동일하며 파생 뷰 1개가 추가됩니다.

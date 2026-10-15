@@ -1,6 +1,6 @@
 # EstateMatch
 
-공인중개사무소별 데이터 격리·직원 권한과 2단계 매물관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
+공인중개사무소별 데이터 격리·직원 권한과 매물관리와 3단계 고객관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
 
 ## 실행
 
@@ -18,7 +18,7 @@ npm run dev
 
 표준 Supabase CLI도 `supabase/config.toml`에 구성되어 있습니다. 충분한 디스크가 있는 별도 환경에서는 `npx supabase start`와 `node scripts/local-env.mjs`를 사용할 수 있습니다. 두 구성을 같은 포트에서 동시에 실행하지 마세요. CLI 전체 구성은 이 환경에서 검증하지 못했습니다. CLI 모드의 DB 테스트는 `ESTATEMATCH_DB_CONTAINER=supabase_db_BEST npm run test:db`로 실행합니다.
 
-`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 고객 CRUD UI는 후속 단계입니다. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
+`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 상단 **고객관리** 또는 대시보드 **고객관리 열기**에서 개인·법인 고객, 상담·연락 이력, 다음 연락 일정과 개인정보 처리 기록을 관리합니다. [3단계 고객관리 안내](docs/customer-management.md)를 확인하세요. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
 
 ## 가상 테스트 계정
 
@@ -81,9 +81,11 @@ npm run test:integration
 npm run test:properties
 npm run test:property-buildings
 npm run test:property-migration
+npm run test:customers
 # 선택: 실제 브라우저 UI 회귀 검사
 npx playwright install chromium
 npm run test:property-ui
+npm run test:customer-ui
 ```
 
 DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역할을 전환하고 JWT 사용자 식별자를 설정합니다. 각 테이블의 조회·수정 범위, 위조·권한 상승, 복합 FK, CHECK/UNIQUE, 삭제, updated_at, 비활성 직원, 초대 승인·재사용을 검사하며 모든 변경은 롤백합니다. Supabase 전용 Auth 테이블을 가짜 fixture로 대체하지 않습니다.
@@ -97,3 +99,7 @@ DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역�
 매물·계약·당사자·만기·재계약·이전 고객을 관리하는 업무 시스템으로 전환합니다. 현재 구현 분석, 추가 테이블, 화면 메뉴와 3단계 마이그레이션 계획은 [전환 분석서](docs/v2-development-plan.md)를 참고하세요. 계약 업무 화면은 아직 구현 전이며 기존 매칭 데이터는 보존합니다.
 
 매물 등록은 아파트·오피스텔에 방 수/화장실 수를 제공하고 주소 입력을 생략합니다. 기존 주소는 유지됩니다. 모든 거래 유형에 희망 날짜와 일정 메모를 입력할 수 있습니다. 날짜 미정이면 메모만 기록하세요. 기존 DB에는 `bash scripts/start-local.sh`로 추가 마이그레이션 005를 적용한 뒤 Next 서버를 다시 실행하세요. 데이터 초기화는 필요하지 않습니다. 추가 검사는 `npm run test:property-schedule`입니다.
+
+## 3단계 고객관리
+
+기존 customers/consultations를 확장한 `202610150006_customer_management.sql`을 추가했습니다. ID·담당자·매칭·계약 데이터는 보존하며 고객의 계약별 역할은 다음 단계에서 연결합니다. 사업자등록번호·주민등록번호는 수집하지 않습니다. [기능·DB·권한·실행 안내](docs/customer-management.md)와 [검증 결과](docs/validation.md)를 참고하세요.

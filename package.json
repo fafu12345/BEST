@@ -14,6 +14,8 @@
     "test:property-ui": "node scripts/test-property-ui.mjs",
     "test:property-buildings": "node scripts/test-property-buildings.mjs",
     "test:property-schedule": "node scripts/test-property-schedule.mjs",
+    "test:customers": "node scripts/test-customers.mjs",
+    "test:customer-ui": "node scripts/test-customer-ui.mjs",
     "test:property-migration": "node scripts/test-property-migration.mjs"
   },
   "dependencies": {

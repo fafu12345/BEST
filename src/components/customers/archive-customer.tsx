@@ -1,0 +1,4 @@
+'use client';
+import {useState} from 'react';
+import {useRouter} from 'next/navigation';
+export function ArchiveCustomer({id,version}:{id:string;version:number}){const router=useRouter();const [pending,setPending]=useState(false);const [error,setError]=useState('');async function archive(){if(!confirm('고객을 활성 목록에서 보관 처리합니다. 상담·기존 계약 데이터는 삭제되지 않으며 개인정보 파기가 아닙니다. 계속할까요?'))return;setPending(true);try{const r=await fetch('/api/customers/'+id,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({version})});if(!r.ok)throw new Error((await r.json()).error);router.push('/dashboard/customers');router.refresh();}catch(e){setError(e instanceof Error?e.message:'보관 실패');}finally{setPending(false);}}return <div><button className="btn-secondary" disabled={pending} onClick={archive}>고객 보관</button>{error&&<p role="alert" className="text-sm text-red-700">{error}</p>}</div>;}

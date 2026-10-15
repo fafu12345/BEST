@@ -24,9 +24,18 @@ try {
  create schema upgrade_test;
  create table upgrade_test.before as select id,office_id,assigned_staff_id,address,price,deposit,area_m2,version,created_at,last_confirmed_at from public.properties;
  create table upgrade_test.audit_count as select count(*) n from public.property_change_history;
+ create table upgrade_test.customer_before as select id,to_jsonb(c) original from public.customers c;
+ create table upgrade_test.contract_before as select id,to_jsonb(c) original from public.contracts c;
+ create table upgrade_test.match_before as select id,to_jsonb(c) original from public.matches c;
+ create table upgrade_test.requirement_before as select id,to_jsonb(c) original from public.customer_requirements c;
+ create table upgrade_test.consultation_before as select id,to_jsonb(c) original from public.consultations c;
  update public.staff set active=false where id='30000000-0000-0000-0000-000000000003';`);
  for(const name of migrations.filter(x=>x>='202610150004'))sql(readFileSync('supabase/migrations/'+name,'utf8'));
  sql(`do $$ begin
+ if exists(select 1 from upgrade_test.customer_before b left join public.customers c using(id) where c.id is null or (select jsonb_object_agg(key,to_jsonb(c)->key) from jsonb_each(b.original)) is distinct from b.original) then raise exception 'Legacy customer values modified'; end if;
+ if exists(select 1 from upgrade_test.consultation_before b left join public.consultations c using(id) where c.id is null or (select jsonb_object_agg(key,to_jsonb(c)->key) from jsonb_each(b.original)) is distinct from b.original) then raise exception 'Legacy consultations modified'; end if;
+ if exists(select 1 from upgrade_test.contract_before b left join public.contracts c using(id) where to_jsonb(c) is distinct from b.original) or exists(select 1 from upgrade_test.match_before b left join public.matches c using(id) where to_jsonb(c) is distinct from b.original) or exists(select 1 from upgrade_test.requirement_before b left join public.customer_requirements c using(id) where to_jsonb(c) is distinct from b.original) then raise exception 'Contract/matching data modified'; end if;
+ if exists(select 1 from public.customers where contact_consent is not null or consent_recorded_at is not null or privacy_basis<>'unrecorded' or retention_until is not null or version<>1) then raise exception 'Customer migration invented consent/retention'; end if;
  if exists(select 1 from upgrade_test.before b join public.properties p using(id) where row(b.office_id,b.assigned_staff_id,b.address,b.price,b.deposit,b.area_m2,b.version,b.created_at,b.last_confirmed_at) is distinct from row(p.office_id,p.assigned_staff_id,p.address,p.price,p.deposit,p.area_m2,p.version,p.created_at,p.last_confirmed_at)) then raise exception 'Legacy values were modified'; end if;
  if (select count(distinct building_id) from public.properties where id in ('40000000-0000-0000-0000-000000000081','40000000-0000-0000-0000-000000000082'))<>1 then raise exception 'Building backfill did not deduplicate'; end if;
  if (select building_id is not null from public.properties where id='40000000-0000-0000-0000-000000000083') then raise exception 'Whitespace name must not become a choice'; end if;
