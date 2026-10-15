@@ -49,3 +49,9 @@
 ## 007 변경 이력 삭제
 
 기존 업무 테이블·데이터를 유지한다. property_change_history에 authenticated DELETE와 같은 사무소의 활성 매물 담당자/대표/관리자만 삭제할 수 있는 RLS를 추가한다. INSERT/UPDATE 권한은 계속 금지하며 이후 실제 변경은 기존 트리거로 기록된다. 고객 개인정보 처리 컬럼은 기존 값 보존·구 API 호환을 위해 유지하되 현재 화면·필수 입력·표시에서는 제거했다.
+
+## 008~009 매물별 계약관리
+
+기존 contracts를 재사용하며 과거 amount/signed_at/customer_id와 ID·담당자를 보존한다. 신규 계약의 체결 금액, 일정, 6개 상태, 이전 계약 연결, 버전과 매물 상태 검토를 확장했다. contract_parties/contract_events/contract_documents 3개 테이블이 추가되어 현재 공개 업무 테이블은 17개이며 모두 RLS다. contract_directory는 호출자 권한으로 검색·고객 연결·과거 날짜를 조회하는 security_invoker 뷰다.
+
+정확한 필드·제약·권한·원자 저장·서류 감사 정책은 [4단계 계약관리 안내](contract-management.md)를 참조한다. 기존 001~007 마이그레이션은 변경하지 않는다. 계약 금액·당사자 역할을 현재 매물·고객 정보에서 소급 추정하지 않는다. 비공개 contract-documents 버킷은 인증 다운로드마다 DB 접근 승인을 기록하며 원본 덮어쓰기·삭제·서명 URL을 차단한다.

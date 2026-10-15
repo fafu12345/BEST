@@ -8,7 +8,8 @@ begin
  begin execute command; exception when others then get stacked diagnostics actual=returned_sqlstate; end;
  perform pg_temp.assert(actual=expected_state,label||' SQLSTATE='||coalesce(actual,'success'));
 end $$;
-select pg_temp.assert((select count(*)=14 from pg_tables where schemaname='public' and rowsecurity),'All 14 public tables enable RLS');
+select pg_temp.assert((select count(*)=17 from pg_tables where schemaname='public' and rowsecurity),'All 17 public tables enable RLS');
+select pg_temp.assert((select not public from storage.buckets where id='contract-documents'),'Contract document bucket is private');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000003',true);
 select pg_temp.assert((select count(*)=1 from public.offices),'agent sees one office');

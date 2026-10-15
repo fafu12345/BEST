@@ -1,0 +1,19 @@
+import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+import {createClient} from '@supabase/supabase-js';
+import {createServerClient} from '@supabase/ssr';
+export const config=Object.fromEntries(readFileSync('.env.local','utf8').split('\n').filter(x=>x&&!x.startsWith('#')).map(x=>{const i=x.indexOf('=');return [x.slice(0,i),x.slice(i+1).replace(/^"|"$/g,'')];}));
+assert.match(config.NEXT_PUBLIC_SUPABASE_URL,/^http:\/\/(127\.0\.0\.1|localhost):54321$/);
+export const app='http://127.0.0.1:3000';
+export const admin=createClient(config.NEXT_PUBLIC_SUPABASE_URL,config.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
+export async function actor(email){const jar=new Map();const db=createServerClient(config.NEXT_PUBLIC_SUPABASE_URL,config.NEXT_PUBLIC_SUPABASE_ANON_KEY,{cookies:{getAll:()=>[...jar].map(([name,value])=>({name,value})),setAll:items=>items.forEach(x=>jar.set(x.name,x.value))}});const r=await db.auth.signInWithPassword({email:email+'@estatematch.test',password:'EstateMatch-Test-2026!'});assert.ifError(r.error);const staff=await db.from('staff').select('id,office_id').eq('user_id',r.data.user.id).single();assert.ifError(staff.error);return {db,staff:staff.data,cookie:[...jar].map(([k,v])=>`${k}=${v}`).join('; ')};}
+export async function req(path,method='GET',body,who,origin=app){return fetch(app+path,{method,headers:{Origin:origin,...(who?{Cookie:who.cookie}:{}),...(body instanceof FormData?{}:body?{'Content-Type':'application/json'}:{})},body:body instanceof FormData?body:body?JSON.stringify(body):undefined});}
+export const propertyInput=marker=>({title:marker,building_name:'가상 계약 빌딩',address:'가상 계약로 123',property_type:'officetel',transaction_type:'sale',price:300000000,deposit:20000000,monthly_rent:500000,area_m2:33.06,floor:2,total_floors:10,status:'available',description:'테스트',premium:0,business_type:'',facilities:'',complex_name:'',building_dong:'',unit_number:'201',room_count:1,store_name:'',confirm:false});
+export const customerInput=name=>({customer_kind:'individual',name,company_name:'',phone:null,email:null,notes:'가상 고객',status:'active',next_contact_at:null});
+export async function create(path,body,who){const r=await req(path,'POST',body,who);assert.equal(r.status,201,await r.clone().text());return r.json();}
+export async function cleanup({contracts=[],customers=[],properties=[]}){
+ if(contracts.length){const documents=await admin.from('contract_documents').select('storage_path').in('contract_id',contracts);assert.ifError(documents.error);if(documents.data.length)assert.ifError((await admin.storage.from('contract-documents').remove(documents.data.map(d=>d.storage_path))).error);for(const id of contracts)assert.match(id,/^[0-9a-f-]{36}$/);const ids=contracts.map(id=>`'${id}'`).join(',');execFileSync('docker',['exec','-i',process.env.ESTATEMATCH_DB_CONTAINER||'estatematch-db','psql','-U','postgres','-v','ON_ERROR_STOP=1'],{input:`begin;update public.contracts set status='cancelled' where id in (${ids});delete from public.contract_documents where contract_id in (${ids});delete from public.contract_parties where contract_id in (${ids});delete from public.contract_events where contract_id in (${ids});delete from public.contracts where id in (${ids});commit;`,stdio:['pipe','pipe','pipe']});}
+ if(customers.length){assert.ifError((await admin.from('consultations').delete().in('customer_id',customers)).error);assert.ifError((await admin.from('customers').delete().in('id',customers)).error);}
+ if(properties.length){assert.ifError((await admin.from('property_change_history').delete().in('property_id',properties)).error);assert.ifError((await admin.from('properties').delete().in('id',properties)).error);}
+}

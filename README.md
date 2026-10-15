@@ -1,6 +1,6 @@
 # EstateMatch
 
-공인중개사무소별 데이터 격리·직원 권한과 매물관리와 3단계 고객관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
+공인중개사무소별 데이터 격리·직원 권한과 매물·고객·4단계 계약관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
 
 ## 실행
 
@@ -42,11 +42,13 @@ seed는 로컬 개발 전용입니다. 실제 서비스에 적용하지 마세�
 - `supabase/migrations/202610150002_storage.sql`: 비공개 이미지 버킷과 Storage 정책
 - `supabase/migrations/202610150003_property_management.sql`: 매물 확장 필드, 이력 테이블, RLS를 유지한 소프트 삭제·파일 보호
 - `supabase/migrations/202610150004_property_buildings.sql`: 사무소·유형별 건물/단지 보기, 상호·호실, 거래금액 확장과 기존 자료 호환
+- `supabase/migrations/202610150008_contract_management.sql`: 기존 계약 확장, 당사자·감사·서류 테이블과 원자 저장
+- `supabase/migrations/202610150009_contract_documents.sql`: 비공개 계약 서류·원본 보호·다운로드 접근 감사
 - `supabase/seed.sql`: 가상 사무소 두 곳, 직원 5명, 업무 데이터
 
 SQL은 Supabase의 `auth.users`, `auth.uid()`, `storage` 스키마 및 기본 역할을 전제로 합니다. 일반 빈 PostgreSQL에 바로 적용하는 SQL이 아닙니다. 로컬 시작 스크립트 또는 Supabase CLI로 실행하면 Auth/Storage 스키마 준비 후 순서대로 실행됩니다. 원격 DB 적용·배포는 수행하지 않습니다.
 
-기본 12개 테이블에 매물 이력과 유형별 건물·단지 보기 테이블을 추가해 업무 테이블은 총 14개입니다. 모든 업무 데이터의 FK는 office_id를 포함해 다른 사무소 데이터 연결을 차단합니다. 직원은 한 사무소에만 소속됩니다. 사무소마다 활성 대표는 최대 한 명입니다. 사진·고객 희망 조건의 담당자는 부모와 같으며 부모 담당자 변경 시 함께 갱신됩니다. 매물은 소프트 삭제만 제공하며 다른 테이블의 참조와 이력은 유지합니다. 고객 삭제는 FK가 막을 수 있습니다.
+기본 12개 테이블에 매물 이력·건물 보기와 계약 당사자·이벤트·서류 테이블을 추가해 업무 테이블은 총 17개입니다. 기존 contracts는 재사용합니다. 모든 업무 데이터의 FK는 office_id를 포함해 다른 사무소 데이터 연결을 차단합니다. 직원은 한 사무소에만 소속됩니다. 사무소마다 활성 대표는 최대 한 명입니다. 사진·고객 희망 조건의 담당자는 부모와 같으며 부모 담당자 변경 시 함께 갱신됩니다. 매물은 소프트 삭제만 제공하며 다른 테이블의 참조와 이력은 유지합니다. 고객은 소프트 보관하며 계약·상담을 보존합니다. 계약은 종료·취소 상태로 관리하고 하드 삭제하지 않습니다.
 
 ## 권한
 
@@ -82,10 +84,12 @@ npm run test:properties
 npm run test:property-buildings
 npm run test:property-migration
 npm run test:customers
+npm run test:contracts
 # 선택: 실제 브라우저 UI 회귀 검사
 npx playwright install chromium
 npm run test:property-ui
 npm run test:customer-ui
+npm run test:contract-ui
 npm run test:photo-history-ui
 ```
 
@@ -108,3 +112,11 @@ DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역�
 ## 사진 및 변경 이력 개선 (007)
 
 사진을 여러 장 선택해 한 번에 올리고 파일명 없이 표시합니다. 사진 클릭은 사이트 내 뷰어(이전·다음·방향키·Escape)로 열립니다. 웹에서 Windows 기본 사진 앱을 직접 실행하는 기능은 제공하지 않습니다. 담당자·대표·관리자는 매물 변경 이력을 개별·전체 삭제할 수 있습니다. 고객의 개인정보 처리 기록 화면과 필수 입력은 제거했으며 기존 DB 값은 보존합니다. 최신 코드에서 `bash scripts/start-local.sh`로 추가 정책 007을 적용하고 Next 서버를 재시작하세요.
+
+## 4단계 계약관리
+
+**매물 상세 → 계약 등록**에서 매매·전세·월세 계약을 작성하고 기존 또는 신규 고객을 계약별 임대인/임차인/매도인/매수인/기타 역할로 연결합니다. 한 매물·고객에 여러 계약을 보존하며 계약 금액은 매물 가격과 독립적으로 저장합니다. 상단 **계약관리**에서 계약번호·매물·고객 이름, 상태·직원·계약일로 검색합니다.
+
+계약서 원본은 비공개로 보관하고 덮어쓰기·삭제를 금지합니다. 정정본은 새 파일로 추가하며 수정·다운로드 접근 승인을 기록합니다. 기간 중복은 예외 사유로 확인하고, 계약 체결·종료 후에는 실제 매물 상태를 직접 검토합니다. [기능·DB·권한·파일 구조](docs/contract-management.md), [검증 결과와 화면](docs/validation.md)를 참고하세요.
+
+최신 코드에서 `bash scripts/start-local.sh`로 미적용 008·009를 추가 적용한 후 Next 서버를 다시 실행하세요. 기존 볼륨·DB를 초기화하지 마세요. .env.example의 기존 설정을 그대로 사용합니다. exact seed 개수를 검사하는 `test:integration`은 다른 데이터 생성 테스트가 끝난 뒤 별도로 실행하세요.

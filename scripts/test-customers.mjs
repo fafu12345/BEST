@@ -55,7 +55,7 @@ try{
  const foreignLinks=await other.db.from('customer_property_links').select('*').eq('customer_id',id);assert.ifError(foreignLinks.error);ok(foreignLinks.data.length===0,'invoker view preserves cross-office RLS');
  const history=await (await req('/api/customers/'+id+'/consultations','GET',undefined,b)).json();ok(history.consultations.length===1&&history.consultations[0].summary===contact.summary,'shared consultation history');
  const html=await (await req('/dashboard/customers/'+id,'GET',undefined,a)).text();ok(html.includes('가상 통화 내역')&&html.includes('/dashboard/properties/'+contact.property_id),'detail includes history and related property');
- ok(html.includes('다음 단계에서 제공')&&!html.includes('customer_type'),'contract placeholder without fixed roles');
+ ok(html.includes('과거·현재 계약')&&html.includes('연결된 계약이 없습니다.')&&!html.includes('customer_type'),'customer contract list without fixed roles');
  const many=await a.db.from('consultations').insert(Array.from({length:20},(_,i)=>({...contact,office_id:a.staff.office_id,assigned_staff_id:a.staff.id,customer_id:id,summary:'가상 과거 상담 '+i,consulted_at:'2020-01-01T00:00:00Z'})));assert.ifError(many.error);
  const historyPage=await (await req('/dashboard/customers/'+id+'?historyPage=2','GET',undefined,a)).text();ok(historyPage.includes('가상 과거 상담')&&historyPage.replace(/<!--[\s\S]*?-->/g,'').includes('총 21건'),'history pagination retains older consultations');
  ok((await patch(id,{...base,assigned_staff_id:b.staff.id},p.version,manager)).status===200,'manager can reassign');p=await read(id,b);ok(p.assigned_staff_id===b.staff.id,'new assignee stored');
