@@ -45,3 +45,7 @@
 ## 006 고객관리 확장
 
 기존 customers의 id/office_id/assigned_staff_id와 연락처·상태·메모를 유지합니다. 개인·법인 구분, 법인명, 연락 동의 및 기록시각, 다음 연락일, 개인정보 처리 근거·목적·기한, 소프트 보관·버전과 검색용 생성 컬럼을 추가합니다. consultations는 contact_method를 추가하고 기존 FK·상담 내용을 보존합니다. 고객 역할을 고정하지 않으며 계약 연결은 다음 단계입니다. 상세 필드·인덱스·보관·RLS와 security_invoker 파생 뷰는 [고객관리 DB 안내](customer-management.md)를 참조하세요. 공개 업무 테이블 수는 14개로 동일하며 파생 뷰 1개가 추가됩니다.
+
+## 007 변경 이력 삭제
+
+기존 업무 테이블·데이터를 유지한다. property_change_history에 authenticated DELETE와 같은 사무소의 활성 매물 담당자/대표/관리자만 삭제할 수 있는 RLS를 추가한다. INSERT/UPDATE 권한은 계속 금지하며 이후 실제 변경은 기존 트리거로 기록된다. 고객 개인정보 처리 컬럼은 기존 값 보존·구 API 호환을 위해 유지하되 현재 화면·필수 입력·표시에서는 제거했다.

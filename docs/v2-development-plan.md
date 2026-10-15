@@ -1,6 +1,6 @@
 # EstateMatch v2.0 전환 분석 및 개발 계획
 
-> 후속 반영: 3단계 고객관리는 [고객관리 안내](customer-management.md)에 따라 구현했습니다. 이 문서의 초기 계약/당사자/업무 마이그레이션 번호 계획은 아래 수정 순서를 따릅니다. 006은 고객관리 확장으로 사용했고, 계약 확장·당사자·후속 업무는 007 이후에 진행합니다. 계약 연결은 다음 단계이며 기존 계약 데이터는 유지됩니다.
+> 후속 반영: 3단계 고객관리는 [고객관리 안내](customer-management.md)에 따라 구현했습니다. 이 문서의 초기 계약/당사자/업무 마이그레이션 번호 계획은 아래 수정 순서를 따릅니다. 006은 고객관리 확장으로 사용했고, 007은 사용자 요청에 따른 매물 이력 삭제 정책이며 계약 확장·당사자·후속 업무는 008 이후에 진행합니다. 계약 연결은 다음 단계이며 기존 계약 데이터는 유지됩니다.
 
 확인 기준: 2026-10-15, 기존 001~004 마이그레이션 및 현재 `src` 구현.
 목표: 매물·계약·당사자·만기·재계약·이전 고객을 계속 관리하는 사무소 업무 시스템.
@@ -67,9 +67,9 @@ id, office_id, contract_id, actor_staff_id, event, old_values(jsonb), new_values
 ## 추가 마이그레이션 계획
 
 1. **005 (이번 적용):** 매물 화장실 수·거래 희망 일정만 추가. 기존 정책·주소·금액·계약 행 무변경.
-2. **007 (다음 단계 예정):** contracts에 transaction_type, deposit, monthly_rent, starts_on, ends_on, balance_due_on, previous_contract_id, version 추가. 기존 signed_at/amount/customer_id/contract_number 유지. 기존 상태 draft/signed/cancelled 유지하면서 종료 상태 추가. 날짜 순서·비음수 금액 CHECK, office/date 및 office/assignee 인덱스.
-3. **008 (다음 단계 예정):** contract_parties와 contract_events 및 복합 FK·UNIQUE·RLS·updated_at/감사 트리거. 이전 계약 연결은 같은 사무소로 제한하고 자기 참조·순환 연결 방지. 계약과 당사자 저장은 SECURITY INVOKER 트랜잭션으로 원자 처리한다.
-4. **009 (후속 단계 예정):** tasks에 contract_id, followup_type(renewal/recontract/moveout/relocation/other), result_contract_id, version 추가. 기존 property_id/customer_id/due_at/status/담당자 보존. 이전 업무는 other로 호환한다.
+2. **008 (다음 단계 예정):** contracts에 transaction_type, deposit, monthly_rent, starts_on, ends_on, balance_due_on, previous_contract_id, version 추가. 기존 signed_at/amount/customer_id/contract_number 유지. 기존 상태 draft/signed/cancelled 유지하면서 종료 상태 추가. 날짜 순서·비음수 금액 CHECK, office/date 및 office/assignee 인덱스.
+3. **009 (다음 단계 예정):** contract_parties와 contract_events 및 복합 FK·UNIQUE·RLS·updated_at/감사 트리거. 이전 계약 연결은 같은 사무소로 제한하고 자기 참조·순환 연결 방지. 계약과 당사자 저장은 SECURITY INVOKER 트랜잭션으로 원자 처리한다.
+4. **010 (후속 단계 예정):** tasks에 contract_id, followup_type(renewal/recontract/moveout/relocation/other), result_contract_id, version 추가. 기존 property_id/customer_id/due_at/status/담당자 보존. 이전 업무는 other로 호환한다.
 
 기존 계약 금액만으로 보증금·월세를 추정하지 않는다. 거래 유형도 현재 매물의 유형을 과거 계약에 무조건 대입하지 않는다. 미확인 값은 nullable로 남기고 화면에서 보완 대상으로 표시한다. 기존 customer_id를 보존하되 임대인/임차인 등의 역할을 임의로 지정하지 않는다.
 신규 계약에서는 buyer/tenant를 기존 customer_id 대표 연결에 기록하여 구 API와의 호환을 유지한다. 공동 당사자는 contract_parties에 모두 기록한다.
@@ -89,4 +89,4 @@ id, office_id, contract_id, actor_staff_id, event, old_values(jsonb), new_values
 
 ## 영향과 현재 완료 범위
 
-전체 재생성·테이블 삭제·기존 마이그레이션 수정은 하지 않는다. 매칭 테이블 및 기존 RLS는 유지한다. 매물 입력 개선과 전환 분석에 이어 고객관리 006 구현을 완료했다. 007~009 및 계약 업무 화면은 계획 상태다. 외부 알림·메일·자동 연동과 실제 개인정보는 사용하지 않으며 클라우드 배포나 유료 서비스는 생성하지 않는다.
+전체 재생성·테이블 삭제·기존 마이그레이션 수정은 하지 않는다. 매칭 테이블 및 기존 RLS는 유지한다. 매물 입력 개선과 전환 분석에 이어 고객관리 006 구현을 완료했다. 008~010 및 계약 업무 화면은 계획 상태다. 외부 알림·메일·자동 연동과 실제 개인정보는 사용하지 않으며 클라우드 배포나 유료 서비스는 생성하지 않는다.

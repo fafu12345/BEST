@@ -12,8 +12,8 @@
 6. 면적은 **전용면적 하나**를 ㎡로 입력하고 평과 ㎡를 함께 표시합니다. 1평 = 3.305785㎡입니다. 입력은 소수점 두 자리까지 지원합니다. 해당 층·전체 층은 개별 매물 정보로 유지하지만 최소·최대 면적, 최저·최고 층 검색 입력란은 제거했습니다.
 7. 등록자는 자동으로 담당 직원이 됩니다. 대표·관리자는 저장 후 같은 사무소의 활성 직원으로 변경할 수 있습니다. 직원은 자기 담당 자료만 수정합니다.
 8. 같은 주소·층에 다른 활성 매물이 있으면 중복 후보를 표시합니다. 다른 호실이나 별도 거래 조건이면 확인 후 등록할 수 있습니다. 같은 사무소 후보만 보입니다.
-9. 상세에서 사진(JPEG/PNG/WebP)과 도면(이미지/PDF)을 파일당 10MiB까지 올릴 수 있습니다.
-10. 거래 상태·매매가격·보증금·월세·권리금·담당자 변경은 DB에서 자동 기록합니다. 화면은 최신 100건을 표시하고 DB는 전체 이력을 보존합니다. 기존 형식의 가격 이력도 삭제하거나 변조하지 않습니다.
+9. 상세에서 사진(JPEG/PNG/WebP)과 도면(이미지/PDF)을 여러 장 선택해 한 번에 올릴 수 있습니다(파일당 10MiB). 파일명은 표시하지 않으며 사진을 클릭하면 사이트 내 뷰어에서 이전·다음 사진을 볼 수 있습니다. Windows 기본 사진 앱 자동 실행은 브라우저 보안 제한으로 제공하지 않습니다.
+10. 거래 상태·매매가격·보증금·월세·권리금·담당자 변경은 DB에서 자동 기록합니다. 화면은 최신 100건을 표시합니다. 담당 직원·대표·관리자는 확인 후 개별 또는 전체 이력을 영구 삭제할 수 있으며, 이후 변경 이력은 다시 자동 기록됩니다. 기존 형식의 가격 이력도 삭제하거나 변조하지 않습니다.
 11. **현재 정보로 확인 완료 처리**로 저장하면 서버 시각으로 최종 확인일을 갱신합니다. 기존 미확인 자료는 ‘미확인’으로 표시합니다.
 12. 매물 삭제는 소프트 삭제입니다. 앱 목록·상세·중복 후보에서 제외되고 파일 접근도 차단됩니다. 파일과 이력은 보존하며 복원·영구 삭제 화면은 제공하지 않습니다.
 
@@ -30,13 +30,13 @@
 - properties 추가 열: building_name, floor, total_floors, premium, business_type, facilities, complex_name, building_dong, unit_number, room_count, last_confirmed_at, deleted_at, version, search_text(생성 열), normalized_address(생성 열).
 - 004에서 properties에 building_id, store_name, monthly_rent를 추가합니다. property_buildings는 id, office_id, property_type, name, normalized_name, created_by, created_at, updated_at을 갖습니다. office/type별 이름 중복을 막고 properties의 office_id·property_type·building_id 복합 FK로 다른 사무소·유형의 보기 연결을 차단합니다.
 - property_images 추가 열: file_kind(photo/floorplan), original_name, mime_type.
-- property_change_history: id, office_id, property_id, actor_staff_id, event(created/updated/deleted), old_values, new_values, created_at. append-only 이력이므로 updated_at은 없습니다.
+- property_change_history: id, office_id, property_id, actor_staff_id, event(created/updated/deleted), old_values, new_values, created_at. 변경 트리거로 생성하며 updated_at은 없습니다. 사용자 요청에 따라 007에서 권한 있는 삭제를 추가했습니다.
 - 사무소 복합 FK, 활성 담당자 검사, 층수·금액 CHECK, 검색/필터/중복 탐지 인덱스를 적용합니다.
 - 모든 업무 요청은 **로그인 세션의 Supabase 클라이언트**를 사용합니다. 매물 API에서 service_role을 사용하지 않습니다. 직원은 자기 담당만 변경하고 대표·관리자는 같은 사무소 전체를 변경합니다. office_id는 서버에서 결정하고 일반 입력으로 받지 않습니다.
 - version을 DB 트리거에서 증가시키며 수정·삭제 때 같은 버전을 요구해 다른 사용자의 변경을 덮어쓰지 않습니다.
 - 일반 사용자의 properties DELETE 권한을 제거했습니다. 소프트 삭제 RPC는 SECURITY INVOKER로 동일 RLS 안에서 UPDATE합니다. 삭제한 행의 재수정·복원은 직원·관리자·대표 모두 차단됩니다.
 - **보존된 삭제 행은 같은 사무소가 DB/API의 직접 SELECT로 감사 목적으로 읽을 수 있습니다.** 앱의 모든 활성 매물 조회는 deleted_at IS NULL을 적용합니다. 다른 사무소에는 삭제 여부와 관계없이 공개하지 않습니다. 이는 RLS를 우회하는 삭제 함수를 쓰지 않으면서 기록을 보존하기 위한 정책입니다.
-- 이력 트리거만 파생 이력을 쓰기 위해 SECURITY DEFINER입니다. 업무 행 변경 권한을 높이지 않으며 사용자는 이력 INSERT/UPDATE/DELETE 권한이 없습니다. 실제 변경자와 office_id는 DB에서 계산합니다. 적용 전 이력은 소급 생성하지 않습니다.
+- 이력 트리거만 파생 이력을 쓰기 위해 SECURITY DEFINER입니다. 업무 행 변경 권한을 높이지 않으며 사용자는 이력 INSERT/UPDATE 권한이 없습니다. 007에서 같은 사무소의 활성 매물 담당자·대표·관리자에게만 DELETE RLS를 추가했습니다. 실제 변경자와 office_id는 DB에서 계산합니다. 적용 전 이력은 소급 생성하지 않습니다.
 - Storage 버킷은 비공개입니다. 같은 사무소의 활성 직원만 읽고, 담당자·대표·관리자만 올리거나 지웁니다. 삭제한 매물은 Storage 정책과 메타데이터 정책에서도 차단합니다.
 - 앱 파일 경로는 사용자 세션으로 파일을 전달하며 공개 URL·서명 URL을 만들지 않습니다. private/no-store, nosniff, sandbox CSP를 적용합니다. 업로드 크기·확장 형식과 실제 파일 헤더를 검사하고 경로는 서버 UUID로 생성합니다.
 
@@ -75,3 +75,11 @@ npm run test:property-ui
 기존에 저장된 가격과 금액 이력은 004에서 변경하지 않습니다. 기존 price 저장 규칙(매매=매매가격, 전세=전세 보증금, 월세=월세액)을 유지하고 monthly_rent를 별도로 확장합니다. 이전 월세·전세 자료의 monthly_rent가 NULL이면 기존 price에서 올바른 금액을 읽어 표시합니다. 새 입력은 deposit과 monthly_rent를 독립적으로 저장하며 전세·월세의 price는 기존 규칙에 맞춰 서버가 동기화합니다. 이전 API의 monthly_rent 없는 입력도 호환됩니다. 수정 요청에 새 필드가 빠졌다면 기존 건물 선택·상호·매매 임대 금액을 지우지 않으며, 전세의 별도 월세도 보존합니다.
 
 기존 건물명·단지명이 있으면 사무소·유형별 보기로 가져오고 연결합니다. 이름이 비어 있는 자료에서 임의의 건물명을 만들지는 않습니다. 해당 자료를 수정할 때 새 보기를 추가·선택하면 됩니다. 보기는 현재 추가·선택을 지원하며 이름 변경·삭제 기능은 제공하지 않습니다.
+
+## 다중 업로드와 이력 삭제 (007)
+
+다중 선택 파일은 기존 보호 API를 사용해 파일별로 차례대로 업로드합니다. 크기·실제 헤더·형식·담당자·사무소 권한은 각 요청에서 재검사합니다. 일부 실패 시 성공한 파일은 유지하고 실패한 파일만 재시도합니다. 파일명·사진 제목은 화면에 표시하지 않으며 도면 PDF 지원은 유지합니다. 사진 뷰어는 새 탭을 만들지 않고 이전·다음 버튼, 좌우 방향키, Escape 닫기를 지원합니다.
+
+`DELETE /api/properties/[id]/history`는 `{history_id}`로 한 건, `{all:true}`로 해당 매물 전체 이력을 삭제합니다. 서버에서 편집 권한을 검사하고 DB DELETE 정책도 동일한 범위를 강제합니다. 삭제한 이력은 복구할 수 없으며 매물 값과 사진에는 영향을 주지 않습니다. 기존 이력을 일괄 삭제하는 마이그레이션은 수행하지 않습니다.
+
+로컬 DB에 미적용 007을 `bash scripts/start-local.sh`로 적용한 후 Next 서버를 다시 시작하세요. `npm run test:photo-history-ui`로 다중 업로드·뷰어·실패 재시도·이력 삭제 권한을 검사합니다.

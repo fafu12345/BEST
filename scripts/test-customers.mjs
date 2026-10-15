@@ -20,9 +20,10 @@ try{
  ok(!!(await anon.from('customer_property_links').select('*')).error,'anonymous related view access denied');
  for(const path of ['/api/customers','/api/customers/duplicates?name=test','/api/customers/50000000-0000-0000-0000-000000000001','/api/customers/50000000-0000-0000-0000-000000000001/consultations'])ok((await req(path)).status===401,'anonymous blocked '+path);
  ok((await req('/api/customers','POST',base,a,'https://foreign.test')).status===403,'CSRF rejected');
- for(const fields of [{office_id:other.staff.office_id},{role:'owner'},{customer_type:'landlord'},{business_registration_number:'123'},{name:''},{customer_kind:'company',company_name:''},{privacy_basis:'unrecorded'},{retention_until:null},{retention_until:'2027-02-30'},{phone:'not a phone'},{email:'bad email'}])ok((await req('/api/customers','POST',{...base,...fields},a)).status===400,'invalid or forbidden fields rejected '+Object.keys(fields)[0]);
+ for(const fields of [{office_id:other.staff.office_id},{role:'owner'},{customer_type:'landlord'},{business_registration_number:'123'},{name:''},{customer_kind:'company',company_name:''},{retention_until:'2027-02-30'},{phone:'not a phone'},{email:'bad email'}])ok((await req('/api/customers','POST',{...base,...fields},a)).status===400,'invalid or forbidden fields rejected '+Object.keys(fields)[0]);
  ok((await req('/api/customers','POST',{...base,assigned_staff_id:b.staff.id},a)).status===403,'agent cannot assign colleague');
- const id=await create();let p=await read(id);ok(p.assigned_staff_id===a.staff.id&&p.office_id===a.staff.office_id&&p.contact_consent===null&&p.consent_recorded_at===null,'auto assignment and unknown consent preserved');
+ const minimal=Object.fromEntries(Object.entries(base).filter(([k])=>!['contact_consent','privacy_basis','privacy_basis_note','processing_purpose','retention_until'].includes(k)));
+ const id=await create(minimal);let p=await read(id);ok(p.assigned_staff_id===a.staff.id&&p.office_id===a.staff.office_id&&p.contact_consent===null&&p.consent_recorded_at===null,'auto assignment and unknown consent preserved');
  const company=await create({...base,name:marker+' 법인담당자',customer_kind:'company',company_name:marker+' 가상법인',phone:null,email:null,contact_consent:false},manager);const cp=await read(company,manager);ok(cp.customer_kind==='company'&&cp.company_name===marker+' 가상법인'&&cp.contact_consent===false&&!!cp.consent_recorded_at,'company and refusal recorded');
  ok((await req('/api/customers/'+id,'GET',undefined,b)).status===200,'same office colleague can read');
  ok((await req('/api/customers/'+id,'GET',undefined,other)).status===404,'foreign office read hidden');
@@ -33,6 +34,7 @@ try{
  ok(!!(await a.db.from('customers').update({assigned_staff_id:b.staff.id}).eq('id',id)).error,'DB prevents agent reassignment');
  ok(!!(await manager.db.from('customers').update({assigned_staff_id:other.staff.id}).eq('id',id)).error,'DB active same-office staff FK guard');
  ok((await patch(id,{...base,contact_consent:true,notes:'수정 메모'},p.version)).status===200,'assignee update');p=await read(id);ok(p.version===2&&p.contact_consent&&!!p.consent_recorded_at&&p.notes==='수정 메모','version and consent timestamp generated');
+ ok((await patch(id,{...minimal,notes:'간단 수정'},p.version)).status===200,'edit without removed privacy fields succeeds');p=await read(id);ok(p.contact_consent===true&&p.privacy_basis==='consent'&&p.retention_until===base.retention_until,'hidden legacy privacy values survive editing');
  ok((await patch(id,base,1)).status===409,'stale edit rejected');
  const duplicate=await (await req('/api/customers/duplicates?'+new URLSearchParams({name:'다른 이름',phone:'00000001234'}),'GET',undefined,a)).json();ok(duplicate.candidates.some(x=>x.id===id),'normalized phone duplicate warning');
  const emailDup=await (await req('/api/customers/duplicates?'+new URLSearchParams({name:'다른 이름',email:base.email.toUpperCase()}),'GET',undefined,a)).json();ok(emailDup.candidates.some(x=>x.id===id),'case insensitive email duplicate warning');
@@ -61,7 +63,7 @@ try{
  ok((await req('/api/customers/'+id+'/consultations','POST',{...contact,summary:'새 담당자 상담'},b)).status===201,'new assignee can record consultation');
  ok((await patch(id,{...base,next_contact_at:'2000-01-01T00:00:00Z',retention_until:'2000-01-01'},p.version,owner)).status===200,'owner can edit all office customers');p=await read(id,b);
  const overdue=await (await req('/api/customers?'+new URLSearchParams({q:marker,contact:'overdue',sort:'next_contact'}),'GET',undefined,b)).json();ok(overdue.data.length===1&&overdue.data[0].id===id,'overdue contact list');
- const expired=await (await req('/dashboard/customers/'+id,'GET',undefined,b)).text();ok(expired.includes('보유기한이 지났습니다.'),'expired retention flagged');
+ const expired=await (await req('/dashboard/customers/'+id,'GET',undefined,b)).text();ok(!expired.includes('보유기한이 지났습니다.')&&!expired.includes('수집·이용 근거'),'privacy records and expiry alerts removed from detail');
  ok(!!(await b.db.from('customers').delete().eq('id',id)).error,'hard customer deletion revoked');
  ok(!!(await b.db.from('consultations').delete().eq('customer_id',id)).error,'hard consultation deletion revoked');
  ok((await req('/api/customers/'+id,'DELETE',{version:p.version},a)).status===403,'non-assignee archive rejected');

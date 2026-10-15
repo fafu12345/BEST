@@ -17,8 +17,8 @@ const filters=z.object({q:z.string().trim().max(200).default(''),kind:z.enum([''
 export async function customerList(db:Awaited<ReturnType<typeof supabaseServer>>,raw:Record<string,unknown>){
  const parsed=filters.safeParse(raw);const f=parsed.success?parsed.data:filters.parse({});
  if(!parsed.success)return {data:[],count:0,filters:f,error:'검색 조건을 확인하세요.'};
- const sort={name:'name',newest:'created_at',updated:'updated_at',next_contact:'next_contact_at',retention:'retention_until'}[f.sort];
- let q=db.from('customers').select('id,name,company_name,customer_kind,phone,email,status,assigned_staff_id,next_contact_at,retention_until,privacy_basis,updated_at',{count:'exact'}).is('deleted_at',null).order(sort,{ascending:['name','next_contact','retention'].includes(f.sort),nullsFirst:false}).order('id');
+ const sort={name:'name',newest:'created_at',updated:'updated_at',next_contact:'next_contact_at',retention:'updated_at'}[f.sort];
+ let q=db.from('customers').select('id,name,company_name,customer_kind,phone,email,status,assigned_staff_id,next_contact_at,updated_at',{count:'exact'}).is('deleted_at',null).order(sort,{ascending:['name','next_contact'].includes(f.sort),nullsFirst:false}).order('id');
  if(f.q)q=q.ilike('search_text',`%${f.q.replace(/[\\%_]/g,'\\$&')}%`);
  if(f.kind)q=q.eq('customer_kind',f.kind);if(f.assigned)q=q.eq('assigned_staff_id',f.assigned);
  const now=new Date().toISOString();

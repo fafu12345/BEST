@@ -7,10 +7,10 @@ export const customerInput=z.object({
  customer_kind:z.enum(['individual','company']),name:text(100).min(1),company_name:text(200),
  phone:text(40).regex(/^[0-9+()\-\s]*$/,'전화번호 형식을 확인하세요.').nullable(),
  email:z.union([z.email().max(254),z.literal('')]).nullable(),notes:text(10000),
- status:z.enum(['active','inactive']), contact_consent:z.boolean().nullable(),
+ status:z.enum(['active','inactive']), contact_consent:z.boolean().nullable().optional(),
  next_contact_at:z.iso.datetime({offset:true}).nullable(),
- privacy_basis:z.enum(['unrecorded','consent','contract','legal_obligation','legitimate_interest','other']),
- privacy_basis_note:text(1000),processing_purpose:text(500),retention_until:z.iso.date().nullable(),
+ privacy_basis:z.enum(['unrecorded','consent','contract','legal_obligation','legitimate_interest','other']).optional(),
+ privacy_basis_note:text(1000).optional(),processing_purpose:text(500).optional(),retention_until:z.iso.date().nullable().optional(),
  assigned_staff_id:z.guid().optional(),
 }).strict().refine(p=>p.customer_kind!=='company'||!!p.company_name,{message:'법인명을 입력하세요.',path:['company_name']});
 export const updateCustomerInput=z.object({customer:customerInput,version:z.number().int().positive()}).strict();

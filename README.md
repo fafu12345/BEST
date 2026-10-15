@@ -18,7 +18,7 @@ npm run dev
 
 표준 Supabase CLI도 `supabase/config.toml`에 구성되어 있습니다. 충분한 디스크가 있는 별도 환경에서는 `npx supabase start`와 `node scripts/local-env.mjs`를 사용할 수 있습니다. 두 구성을 같은 포트에서 동시에 실행하지 마세요. CLI 전체 구성은 이 환경에서 검증하지 못했습니다. CLI 모드의 DB 테스트는 `ESTATEMATCH_DB_CONTAINER=supabase_db_BEST npm run test:db`로 실행합니다.
 
-`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 상단 **고객관리** 또는 대시보드 **고객관리 열기**에서 개인·법인 고객, 상담·연락 이력, 다음 연락 일정과 개인정보 처리 기록을 관리합니다. [3단계 고객관리 안내](docs/customer-management.md)를 확인하세요. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
+`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 상단 **고객관리** 또는 대시보드 **고객관리 열기**에서 개인·법인 고객, 상담·연락 이력, 다음 연락 일정을 관리합니다. 개인정보 처리 기록 입력·표시는 사용자 요청에 따라 제거했습니다. [3단계 고객관리 안내](docs/customer-management.md)를 확인하세요. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
 
 ## 가상 테스트 계정
 
@@ -86,6 +86,7 @@ npm run test:customers
 npx playwright install chromium
 npm run test:property-ui
 npm run test:customer-ui
+npm run test:photo-history-ui
 ```
 
 DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역할을 전환하고 JWT 사용자 식별자를 설정합니다. 각 테이블의 조회·수정 범위, 위조·권한 상승, 복합 FK, CHECK/UNIQUE, 삭제, updated_at, 비활성 직원, 초대 승인·재사용을 검사하며 모든 변경은 롤백합니다. Supabase 전용 Auth 테이블을 가짜 fixture로 대체하지 않습니다.
@@ -103,3 +104,7 @@ DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역�
 ## 3단계 고객관리
 
 기존 customers/consultations를 확장한 `202610150006_customer_management.sql`을 추가했습니다. ID·담당자·매칭·계약 데이터는 보존하며 고객의 계약별 역할은 다음 단계에서 연결합니다. 사업자등록번호·주민등록번호는 수집하지 않습니다. [기능·DB·권한·실행 안내](docs/customer-management.md)와 [검증 결과](docs/validation.md)를 참고하세요.
+
+## 사진 및 변경 이력 개선 (007)
+
+사진을 여러 장 선택해 한 번에 올리고 파일명 없이 표시합니다. 사진 클릭은 사이트 내 뷰어(이전·다음·방향키·Escape)로 열립니다. 웹에서 Windows 기본 사진 앱을 직접 실행하는 기능은 제공하지 않습니다. 담당자·대표·관리자는 매물 변경 이력을 개별·전체 삭제할 수 있습니다. 고객의 개인정보 처리 기록 화면과 필수 입력은 제거했으며 기존 DB 값은 보존합니다. 최신 코드에서 `bash scripts/start-local.sh`로 추가 정책 007을 적용하고 Next 서버를 재시작하세요.

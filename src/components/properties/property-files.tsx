@@ -1,25 +1,27 @@
 'use client';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import type { PropertyFile } from '@/lib/properties/shared';
-export function PropertyFiles({ id, files, editable }: { id: string; files: PropertyFile[]; editable: boolean }) {
-  const router = useRouter(); const [kind, setKind] = useState('photo'); const [pending,setPending] = useState(false); const [error,setError] = useState('');
-  async function upload(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = event.currentTarget; const payload = new FormData(form); const file = payload.get('file');
-    if (!(file instanceof File) || !file.size || file.size > 10*1024*1024) { setError('10MB 이하 파일을 선택하세요.'); return; }
-    setPending(true); setError('');
-    try { const r = await fetch(`/api/properties/${id}/files`, { method: 'POST', body: payload }); if (!r.ok) throw new Error((await r.json()).error); form.reset(); router.refresh(); }
-    catch(e) { setError(e instanceof Error ? e.message : '파일을 올리지 못했습니다.'); } finally { setPending(false); }
-  }
-  async function remove(fileId: string) {
-    if (!window.confirm('첨부파일을 삭제할까요? 이 파일 삭제는 되돌릴 수 없습니다.')) return;
-    setPending(true); setError('');
-    try { const r = await fetch(`/api/properties/${id}/files/${fileId}`, { method:'DELETE' }); if (!r.ok) throw new Error((await r.json()).error); router.refresh(); }
-    catch(e) { setError(e instanceof Error ? e.message : '삭제하지 못했습니다.'); } finally { setPending(false); }
-  }
-  return <section className="panel"><h2 className="section-title">사진 · 도면</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{files.map(file => <article className="overflow-hidden rounded-xl border border-slate-200" key={file.id}><a target="_blank" rel="noopener noreferrer" href={`/api/properties/${id}/files/${file.id}`} className="block bg-slate-100">{file.mime_type?.startsWith('image/') ? /* unoptimized keeps the request in the authenticated browser. */ <Image unoptimized width={600} height={400} alt={file.caption || file.original_name || '매물 사진'} src={`/api/properties/${id}/files/${file.id}`} className="h-44 w-full object-cover" loading="lazy"/> : <span className="flex h-44 items-center justify-center text-sm font-semibold text-slate-600">{file.mime_type === 'application/pdf' ? 'PDF 도면 열기 ↗' : '첨부파일 열기 ↗'}</span>}</a><div className="p-3"><p className="text-xs font-medium text-teal-700">{file.file_kind === 'photo' ? '사진' : '도면'}</p><p className="mt-1 truncate text-sm">{file.original_name || '가상 테스트 파일'}</p>{editable && <button className="mt-2 text-xs text-red-700 underline" disabled={pending} onClick={() => remove(file.id)}>파일 삭제</button>}</div></article>)}</div>{!files.length && <p className="text-sm text-slate-500">등록된 사진이나 도면이 없습니다.</p>}
-    {editable && <form className="mt-6 grid items-end gap-3 border-t pt-5 sm:grid-cols-[130px_1fr_auto]" onSubmit={upload}><label className="field">종류<select name="file_kind" value={kind} onChange={e => setKind(e.target.value)}><option value="photo">사진</option><option value="floorplan">도면</option></select></label><label className="field">파일 (최대 10MB)<input name="file" type="file" accept={kind === 'photo' ? 'image/jpeg,image/png,image/webp' : 'image/jpeg,image/png,image/webp,application/pdf'} required/></label><button className="btn-primary" disabled={pending}>{pending ? '처리 중…' : '업로드'}</button></form>}
-    {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}<p className="hint mt-4">사무소 직원만 열람할 수 있습니다. 도면은 PDF도 지원합니다. 매물을 삭제하면 파일 접근도 차단됩니다.</p>
-  </section>;
+import {useRouter} from 'next/navigation';
+import {useRef,useState,type FormEvent,type KeyboardEvent} from 'react';
+import type {PropertyFile} from '@/lib/properties/shared';
+export function PropertyFiles({id,files,editable}:{id:string;files:PropertyFile[];editable:boolean}){
+ const router=useRouter();const [kind,setKind]=useState('photo');const [pending,setPending]=useState(false);const [error,setError]=useState('');const [progress,setProgress]=useState('');const [failed,setFailed]=useState<File[]>([]);
+ const dialog=useRef<HTMLDialogElement>(null);const [active,setActive]=useState<string|null>(null);
+ const images=files.filter(f=>f.mime_type?.startsWith('image/'));const index=images.findIndex(f=>f.id===active);const image=index>=0?images[index]:null;
+ function open(fileId:string){setActive(fileId);dialog.current?.showModal();}
+ function move(step:number){if(images.length)setActive(images[(index+step+images.length)%images.length].id);}
+ function keys(e:KeyboardEvent){if(e.key==='ArrowRight'){e.preventDefault();move(1);}if(e.key==='ArrowLeft'){e.preventDefault();move(-1);}}
+ async function send(batch:File[]){setPending(true);setError('');setFailed([]);const failures:File[]=[];let count=0;
+ for(let i=0;i<batch.length;i++){
+  setProgress(`업로드 ${i+1} / ${batch.length}`);
+  try{const file=batch[i];if(!file.size||file.size>10*1024*1024)throw new Error('파일당 10MB 이하만 가능합니다.');const payload=new FormData();payload.set('file',file);payload.set('file_kind',kind);const r=await fetch(`/api/properties/${id}/files`,{method:'POST',body:payload});if(!r.ok)throw new Error((await r.json()).error);count++;}catch{failures.push(batch[i]);}
+ }
+ setFailed(failures);setProgress(`${count}개 업로드 완료${failures.length?` · ${failures.length}개 실패`:''}`);if(failures.length)setError('실패한 파일은 형식·크기·권한을 확인한 뒤 다시 올릴 수 있습니다. 사진: JPEG·PNG·WebP, 도면: 이미지·PDF, 파일당 최대 10MB.');setPending(false);router.refresh();
+ }
+ async function upload(e:FormEvent<HTMLFormElement>){e.preventDefault();const form=e.currentTarget;const batch=new FormData(form).getAll('file').filter((f):f is File=>f instanceof File&&!!f.name);if(!batch.length)return;await send(batch);form.reset();}
+ async function remove(fileId:string){if(!confirm('첨부파일을 삭제할까요? 이 파일 삭제는 되돌릴 수 없습니다.'))return;setPending(true);setError('');try{const r=await fetch(`/api/properties/${id}/files/${fileId}`,{method:'DELETE'});if(!r.ok)throw new Error((await r.json()).error);router.refresh();}catch(e){setError(e instanceof Error?e.message:'삭제하지 못했습니다.');}finally{setPending(false);}}
+ return <section className="panel"><h2 className="section-title">사진 · 도면</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{files.map((file,i)=><article className="relative overflow-hidden rounded-xl border border-slate-200" key={file.id}>{file.mime_type?.startsWith('image/')?<button type="button" className="block w-full bg-slate-100" aria-label={`${file.file_kind==='photo'?'사진':'도면'} ${i+1} 크게 보기`} onClick={()=>open(file.id)}><Image unoptimized width={600} height={400} alt={`${file.file_kind==='photo'?'매물 사진':'매물 도면'} ${i+1}`} src={`/api/properties/${id}/files/${file.id}`} className="h-44 w-full object-cover" loading="lazy"/></button>:<a href={`/api/properties/${id}/files/${file.id}`} className="flex h-44 items-center justify-center bg-slate-100 text-sm font-semibold">PDF 도면 열기</a>}{editable&&<button type="button" aria-label={`첨부 ${i+1} 삭제`} className="absolute right-2 top-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-red-800 shadow" disabled={pending} onClick={()=>remove(file.id)}>삭제</button>}</article>)}</div>{!files.length&&<p className="text-sm text-slate-500">등록된 사진이나 도면이 없습니다.</p>}
+ {editable&&<form className="mt-6 border-t pt-5" onSubmit={upload}><fieldset disabled={pending} className="grid items-end gap-3 sm:grid-cols-[130px_1fr_auto]"><label className="field">종류<select name="file_kind" value={kind} onChange={e=>{setKind(e.target.value);setFailed([]);}}><option value="photo">사진</option><option value="floorplan">도면</option></select></label><label className="field">파일 선택 (여러 장 가능)<input name="file" type="file" multiple accept={kind==='photo'?'image/jpeg,image/png,image/webp':'image/jpeg,image/png,image/webp,application/pdf'} required onChange={()=>{setFailed([]);setError('');setProgress('');}}/></label><button className="btn-primary">{pending?'업로드 중…':'업로드'}</button></fieldset></form>}
+ <p role="status" className="mt-3 text-sm text-teal-800">{progress}</p>{error&&<p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}{editable&&!!failed.length&&<button type="button" className="btn-secondary mt-3" disabled={pending} onClick={()=>send(failed)}>실패한 파일 {failed.length}개 다시 올리기</button>}<p className="hint mt-4">여러 파일을 선택해 한 번에 올릴 수 있습니다. 파일당 최대 10MB · 사진을 누르면 크게 보기 · 사무소 직원만 열람 가능</p>
+ <dialog ref={dialog} onKeyDown={keys} onClick={e=>{if(e.target===e.currentTarget)dialog.current?.close();}} onClose={()=>setActive(null)} aria-label="매물 사진 보기" className="fixed inset-0 m-auto max-h-[95dvh] w-[96vw] max-w-6xl overflow-auto rounded-xl bg-slate-950 p-3 text-white backdrop:bg-black/80"><div className="flex items-center justify-between gap-3 pb-3"><p className="text-sm">{index+1} / {images.length}</p><button type="button" autoFocus className="rounded-lg bg-white/15 px-4 py-2" onClick={()=>dialog.current?.close()}>닫기</button></div>{image&&<Image unoptimized width={1600} height={1200} alt="확대한 매물 사진" src={`/api/properties/${id}/files/${image.id}`} className="max-h-[72dvh] w-full object-contain"/>}<div className="mt-3 flex justify-center gap-4"><button type="button" className="rounded-lg bg-white/15 px-5 py-2" disabled={images.length<2} onClick={()=>move(-1)}>이전 사진</button><button type="button" className="rounded-lg bg-white/15 px-5 py-2" disabled={images.length<2} onClick={()=>move(1)}>다음 사진</button></div></dialog>
+ </section>;
 }
