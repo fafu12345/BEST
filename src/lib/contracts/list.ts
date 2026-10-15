@@ -10,5 +10,5 @@ export async function listContracts(db:Awaited<ReturnType<typeof supabaseServer>
  if(f.status)query=query.eq('status',f.status);if(f.type)query=query.eq('contract_type',f.type);if(f.property)query=query.eq('property_id',f.property);if(f.assigned)query=query.eq('assigned_staff_id',f.assigned);
  if(f.from)query=query.gte('effective_contract_date',f.from);if(f.to)query=query.lte('effective_contract_date',f.to);
  if(f.customer)query=query.contains('customer_ids',[f.customer]);
- const r=await query.range((f.page-1)*20,f.page*20-1);if(r.error)throw new Error('계약 목록 조회 실패');return {data:r.data??[],count:r.count??0,filters:f,error:''};
+ const r=await query.range((f.page-1)*20,f.page*20-1);if(r.error){console.error('[listContracts] contract_directory query failed',{code:r.error.code});throw new Error('계약 목록 조회 실패');}return {data:r.data??[],count:r.count??0,filters:f,error:''};
 }
