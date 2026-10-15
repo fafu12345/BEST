@@ -16,5 +16,5 @@ export async function DELETE(request:Request,{params}:Context){
  const c=await customerContext(request);if(c.error)return c.error;const {id}=await params;const target=await customerTarget(c,id,true);if(target.error)return target.error;
  const parsed=z.object({version:z.number().int().positive()}).strict().safeParse(await request.json().catch(()=>null));if(!parsed.success)return Response.json({error:'버전 정보가 필요합니다.'},{status:400});
  const {data,error}=await c.db.from('customers').update({deleted_at:new Date().toISOString()}).eq('id',id).eq('version',parsed.data.version).is('deleted_at',null).select('id').maybeSingle();
- if(error||!data)return Response.json({error:'보관하지 못했습니다. 새로고침 후 다시 시도하세요.'},{status:409});return new Response(null,{status:204});
+ if(error||!data)return Response.json({error:'삭제하지 못했습니다. 새로고침 후 다시 시도하세요.'},{status:409});return new Response(null,{status:204});
 }

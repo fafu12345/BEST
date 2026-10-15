@@ -4,7 +4,7 @@ export const privacyBases={unrecorded:'미확인 · 기존 자료',consent:'정�
 export const contactMethods={phone:'전화',visit:'방문',email:'이메일',message:'메시지',other:'기타'} as const;
 const text=(max:number)=>z.string().trim().max(max);
 export const customerInput=z.object({
- customer_kind:z.enum(['individual','company']),name:text(100).min(1),company_name:text(200),
+ address:text(500).optional(),customer_kind:z.enum(['individual','company']),name:text(100).min(1),company_name:text(200),
  phone:text(40).regex(/^[0-9+()\-\s]*$/,'전화번호 형식을 확인하세요.').nullable(),
  email:z.union([z.email().max(254),z.literal('')]).nullable(),notes:text(10000),
  status:z.enum(['active','inactive']), contact_consent:z.boolean().nullable().optional(),

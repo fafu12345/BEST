@@ -94,3 +94,11 @@ npm run dev
 미적용 008·009만 추가 적용하고 기존 볼륨·데이터를 보존한다. DB reset이나 Docker 볼륨 삭제는 필요하지 않다. .env.example의 기존 Auth/Storage 설정을 그대로 사용하며 새 유료 서비스나 비밀 키는 필요하지 않다. 원격 DB 적용·클라우드 배포는 하지 않았다.
 
 테스트는 모두 가상 데이터다. `test:contracts`와 `test:contract-ui`, 기존 Auth/직원 초대/Storage·매물·고객 회귀 및 별도 DB 마이그레이션 검사를 수행한다. exact seed 개수를 검사하는 test:integration은 다른 fixture 생성 테스트와 동시에 실행하지 않는다. 브라우저 실행 방법과 실제 결과는 validation.md를 참조한다.
+
+### 계약 표시 변경 (010)
+
+계약번호 입력과 주요 화면의 계약번호 표시를 제거했습니다. 목록·상세·고객/매물의 관련 계약·갱신 원본·기간 중복 경고는
+단지명/건물명(없으면 매물명), 동·호실로 표시합니다. 갱신 원본과 중복 경고에는 계약일·상태도 함께 표시합니다.
+기존 `contract_number` 필드와 API 호환성은 보존하고 신규 계약은 내부 번호를 자동 생성합니다.
+`contract_directory`는 기존 컬럼을 유지한 SECURITY INVOKER 뷰로 갱신하며 동·호실 검색도 지원합니다.
+기존 데이터와 RLS는 유지합니다. 로컬 적용: `bash scripts/start-local.sh` 후 앱을 다시 실행합니다.
