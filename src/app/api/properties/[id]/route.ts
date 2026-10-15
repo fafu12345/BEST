@@ -16,7 +16,7 @@ export async function PATCH(request: Request, { params }: Context) {
   const { id } = await params; const target = await editableProperty(c, id); if (target.error) return target.error;
   const parsed = updateInput.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? '입력값을 확인하세요.' }, { status: 400 });
-  const { values, confirm, assigned_staff_id } = mutationValues(parsed.data.property);
+  const { values, confirm, assigned_staff_id } = mutationValues(parsed.data.property,target.property);
   if (assigned_staff_id && assigned_staff_id !== target.property.assigned_staff_id && !['owner', 'manager'].includes(c.staff.role)) return Response.json({ error: '담당자 변경은 대표·관리자만 가능합니다.' }, { status: 403 });
   const { data, error } = await c.db.from('properties').update({ ...values, ...(assigned_staff_id ? { assigned_staff_id } : {}), ...(confirm ? { last_confirmed_at: new Date().toISOString() } : {}) }).eq('id', id).eq('version', parsed.data.version).is('deleted_at', null).select('id,version').maybeSingle();
   if (error || !data) return conflict();

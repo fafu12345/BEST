@@ -48,15 +48,15 @@ try {
  }
  const duplicate=await (await request('/api/properties/duplicates?address='+encodeURIComponent(base.address)+'&floor=1','GET',undefined,a)).json();
  ok(duplicate.candidates.some(x=>x.id===id)&&!duplicate.candidates.some(x=>x.id===ids[4]),'duplicate warning remains office isolated');
- const list=await request('/dashboard/properties?'+new URLSearchParams({q:marker+'빌딩',type:'retail',transaction:'rent',status:'available',minPrice:'123',maxPrice:'124',minArea:'29',maxArea:'31',minFloor:'1',maxFloor:'1'}),'GET',undefined,a);
- const html=await list.text();ok(list.status===200&&html.includes(id)&&!html.includes(ids[1])&&!html.includes(ids[4]),'combined building, area, price, floor, type, transaction and status search');
+ const list=await request('/dashboard/properties?'+new URLSearchParams({q:marker+'빌딩',type:'retail',transaction:'rent',status:'available',minPrice:'123',maxPrice:'124',area:'99.17'}),'GET',undefined,a);
+ const html=await list.text();ok(list.status===200&&html.includes(id)&&!html.includes(ids[1])&&!html.includes(ids[4]),'combined building, exclusive area, price, type, transaction and status search');
  const invalid=await request('/dashboard/properties?minPrice=100&maxPrice=1','GET',undefined,a);ok((await invalid.text()).includes('가격 범위를'),'invalid filter warning');
  const patch={...base,price:1500000,status:'reserved',confirm:false};
  ok((await request('/api/properties/'+id,'PATCH',{property:patch,version:p.version},a)).status===200,'own update');
  ok((await request('/api/properties/'+id,'PATCH',{property:base,version:p.version},a)).status===409,'stale edit rejected');
  p=await read(id);
  const history=await a.db.from('property_change_history').select('*').eq('property_id',id).order('created_at');assert.ifError(history.error);
- ok(history.data.length===2&&history.data[1].old_values.price===1234567&&history.data[1].new_values.price===1500000&&history.data[1].new_values.status==='reserved'&&history.data[1].actor_staff_id===a.staff.id,'database records financial/status history and actor');
+ ok(history.data.length===2&&history.data[1].old_values.monthly_rent===1234567&&history.data[1].new_values.monthly_rent===1500000&&history.data[1].new_values.status==='reserved'&&history.data[1].actor_staff_id===a.staff.id,'database records financial/status history and actor');
  ok(!!(await a.db.from('property_change_history').update({event:'deleted'}).eq('property_id',id)).error,'audit history cannot be forged');
  ok((await other.db.from('property_change_history').select('id').eq('property_id',id)).data.length===0,'history tenant isolation');
  ok((await request('/api/properties/'+id+'/files','POST',fileForm(),b)).status===403,'colleague upload denied');

@@ -11,13 +11,23 @@ export async function propertyContext(request?: Request) {
   return { staff, db: await supabaseServer() } as const;
 }
 export const validId = (id: string) => z.guid().safeParse(id).success;
-export function mutationValues(input: PropertyInput) {
+export function mutationValues(input: PropertyInput, existing?: {transaction_type: string; deposit: number; monthly_rent: number | null}) {
   const { confirm, assigned_staff_id, ...values } = input;
   // Clear fields from a previous type so hidden form values cannot linger.
   if (values.property_type !== 'retail') { values.premium = 0; values.business_type = ''; values.facilities = ''; }
-  if (values.property_type !== 'apartment') { values.complex_name = ''; values.building_dong = ''; values.unit_number = ''; }
+  if (!['apartment','officetel'].includes(values.property_type)) { values.complex_name = ''; values.building_dong = ''; }
+  if (values.property_type !== 'retail') values.store_name = '';
   if (!['apartment', 'officetel'].includes(values.property_type)) values.room_count = null;
-  if (values.transaction_type !== 'rent') values.deposit = 0;
+  // Keep old API payloads and stored price semantics readable while adding rental income to every transaction type.
+  if (values.transaction_type === 'lease') {
+    if (values.monthly_rent === undefined) values.deposit = values.price;
+    values.price = values.deposit;
+  }
+  if (values.monthly_rent === undefined) {
+    if (values.transaction_type==='sale' && existing?.transaction_type==='sale') values.deposit=existing.deposit;
+    values.monthly_rent=values.transaction_type==='rent' ? values.price : existing?.transaction_type===values.transaction_type ? existing.monthly_rent??0 : 0;
+  }
+  if (values.transaction_type === 'rent') values.price = values.monthly_rent;
   return { values, confirm, assigned_staff_id };
 }
 export async function editableProperty(context: Awaited<ReturnType<typeof propertyContext>>, id: string) {

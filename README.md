@@ -18,7 +18,7 @@ npm run dev
 
 표준 Supabase CLI도 `supabase/config.toml`에 구성되어 있습니다. 충분한 디스크가 있는 별도 환경에서는 `npx supabase start`와 `node scripts/local-env.mjs`를 사용할 수 있습니다. 두 구성을 같은 포트에서 동시에 실행하지 마세요. CLI 전체 구성은 이 환경에서 검증하지 못했습니다. CLI 모드의 DB 테스트는 `ESTATEMATCH_DB_CONTAINER=supabase_db_BEST npm run test:db`로 실행합니다.
 
-`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 고객 CRUD UI는 후속 단계입니다. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
+`/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 고객 CRUD UI는 후속 단계입니다. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
 
 ## 가상 테스트 계정
 
@@ -41,11 +41,12 @@ seed는 로컬 개발 전용입니다. 실제 서비스에 적용하지 마세�
 - `supabase/migrations/202610150001_estatematch.sql`: 업무 테이블 12개, FK/CHECK/UNIQUE/INDEX, updated_at, office_id 변경 방지, RLS, 서버 전용 초대 소비 함수
 - `supabase/migrations/202610150002_storage.sql`: 비공개 이미지 버킷과 Storage 정책
 - `supabase/migrations/202610150003_property_management.sql`: 매물 확장 필드, 이력 테이블, RLS를 유지한 소프트 삭제·파일 보호
+- `supabase/migrations/202610150004_property_buildings.sql`: 사무소·유형별 건물/단지 보기, 상호·호실, 거래금액 확장과 기존 자료 호환
 - `supabase/seed.sql`: 가상 사무소 두 곳, 직원 5명, 업무 데이터
 
 SQL은 Supabase의 `auth.users`, `auth.uid()`, `storage` 스키마 및 기본 역할을 전제로 합니다. 일반 빈 PostgreSQL에 바로 적용하는 SQL이 아닙니다. 로컬 시작 스크립트 또는 Supabase CLI로 실행하면 Auth/Storage 스키마 준비 후 순서대로 실행됩니다. 원격 DB 적용·배포는 수행하지 않습니다.
 
-기본 12개 테이블에 2단계 매물 이력 테이블 1개를 추가해 업무 테이블은 총 13개입니다. 모든 업무 데이터의 FK는 office_id를 포함해 다른 사무소 데이터 연결을 차단합니다. 직원은 한 사무소에만 소속됩니다. 사무소마다 활성 대표는 최대 한 명입니다. 사진·고객 희망 조건의 담당자는 부모와 같으며 부모 담당자 변경 시 함께 갱신됩니다. 매물은 소프트 삭제만 제공하며 다른 테이블의 참조와 이력은 유지합니다. 고객 삭제는 FK가 막을 수 있습니다.
+기본 12개 테이블에 매물 이력과 유형별 건물·단지 보기 테이블을 추가해 업무 테이블은 총 14개입니다. 모든 업무 데이터의 FK는 office_id를 포함해 다른 사무소 데이터 연결을 차단합니다. 직원은 한 사무소에만 소속됩니다. 사무소마다 활성 대표는 최대 한 명입니다. 사진·고객 희망 조건의 담당자는 부모와 같으며 부모 담당자 변경 시 함께 갱신됩니다. 매물은 소프트 삭제만 제공하며 다른 테이블의 참조와 이력은 유지합니다. 고객 삭제는 FK가 막을 수 있습니다.
 
 ## 권한
 
@@ -78,6 +79,8 @@ npm run test:db
 # Next 서버와 로컬 Supabase가 실행 중인 별도 터미널에서
 npm run test:integration
 npm run test:properties
+npm run test:property-buildings
+npm run test:property-migration
 # 선택: 실제 브라우저 UI 회귀 검사
 npx playwright install chromium
 npm run test:property-ui

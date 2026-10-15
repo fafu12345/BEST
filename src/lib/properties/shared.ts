@@ -6,6 +6,7 @@ export const statuses = { available: '거래 가능', reserved: '계약 진행',
 const money = z.number().int().min(0).max(9_000_000_000_000_000);
 const text = (max: number) => z.string().trim().max(max);
 export const propertyInput = z.object({
+  building_id: z.guid().nullable().optional(), store_name: text(200).optional(), monthly_rent: money.optional(),
   title: text(200).min(1), building_name: text(200), address: text(500).min(4),
   property_type: z.enum(['retail', 'office', 'apartment', 'officetel']),
   transaction_type: z.enum(['sale', 'lease', 'rent']), price: money, deposit: money,
@@ -18,10 +19,11 @@ export const propertyInput = z.object({
 }).strict().refine(p => p.floor === null || p.total_floors === null || p.floor <= p.total_floors, { message: '현재 층이 전체 층보다 높습니다.', path: ['floor'] });
 export const updateInput = z.object({ property: propertyInput, version: z.number().int().positive() }).strict();
 export type PropertyInput = z.infer<typeof propertyInput>;
-export type Property = Omit<PropertyInput, 'confirm' | 'assigned_staff_id'> & {
-  id: string; office_id: string; assigned_staff_id: string; version: number;
+export type Property = Omit<PropertyInput, 'confirm' | 'assigned_staff_id' | 'monthly_rent' | 'building_id' | 'store_name'> & {
+  building_id: string | null; store_name: string; monthly_rent: number | null; id: string; office_id: string; assigned_staff_id: string; version: number;
   last_confirmed_at: string | null; created_at: string; updated_at: string; deleted_at: string | null;
 };
+export type BuildingOption = { id: string; property_type: string; name: string };
 export type StaffOption = { id: string; display_name: string; role: string; active: boolean };
 export type PropertyFile = { id: string; file_kind: 'photo' | 'floorplan'; original_name: string; mime_type: string | null; caption: string; storage_path: string };
 export type Change = { id: string; event: string; actor_staff_id: string | null; old_values: Record<string, string | number | null> | null; new_values: Record<string, string | number | null>; created_at: string };
@@ -47,3 +49,12 @@ export function areaLabel(value: number | null) { return value === null ? '미�
 export function dateLabel(value: string | null) { return value ? new Date(value).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour12: false }) : '미확인'; }
 export function canEdit(staff: { id: string; role: string }, property: { assigned_staff_id: string }) { return ['owner', 'manager'].includes(staff.role) || staff.id === property.assigned_staff_id; }
 export function normalizeAddress(address: string) { return address.toLowerCase().replace(/[\s\p{P}]/gu, ''); }
+
+export function propertyFinancials(p: { transaction_type: string; price: number; deposit: number; monthly_rent?: number | null }) {
+  return { salePrice:p.transaction_type==='sale'?p.price:0, deposit:p.transaction_type==='lease'?p.price:p.deposit, monthlyRent:p.monthly_rent ?? (p.transaction_type==='rent'?p.price:0) };
+}
+export function propertyPriceLabel(p: { transaction_type: string; price: number; deposit: number; monthly_rent?: number | null }) {
+  const f=propertyFinancials(p);
+  const rental=`보증금 ${moneyLabel(f.deposit)} / 월 ${moneyLabel(f.monthlyRent)}`;
+  return p.transaction_type==='sale' ? `매매 ${moneyLabel(f.salePrice)}${f.deposit || f.monthlyRent ? ` · 임대 ${rental}` : ''}` : rental;
+}

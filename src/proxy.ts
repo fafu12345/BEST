@@ -16,4 +16,4 @@ export async function proxy(request: NextRequest) {
  await db.auth.getUser();
  return response;
 }
-export const config = { matcher: ['/dashboard/:path*', '/api/staff/:path*', '/api/properties/:path*'] };
+export const config = { matcher: ['/dashboard/:path*', '/api/staff/:path*', '/api/properties/:path*', '/api/property-buildings/:path*'] };
