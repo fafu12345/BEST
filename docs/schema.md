@@ -1,0 +1,35 @@
+# EstateMatch 12개 테이블 초안
+
+이 대화의 요구사항에서 도출한 신규 초안입니다. 기존 확정 명세를 복원한 것이 아닙니다. SQL이 정확한 필드·타입·제약조건의 기준입니다.
+
+- `offices`
+- `staff`
+- `staff_invitations`
+- `properties`
+- `customers`
+- `property_images`
+- `customer_requirements`
+- `matches`
+- `appointments`
+- `consultations`
+- `contracts`
+- `tasks`
+
+모든 업무 테이블은 office_id, 담당자, 생성/수정 시각을 포함합니다. 사진과 희망 조건은 부모 담당자와 일치해야 합니다. 대표·관리자가 부모 담당자를 변경하면 사진·희망 조건의 담당자도 복합 FK를 통해 갱신됩니다. 직원은 사무소당 한 곳만 소속됩니다. 최초 대표는 신뢰하는 서버/DB 운영자가 등록합니다.
+
+| 테이블 | 고유 필드 (공통 필드 제외) |
+| --- | --- |
+| offices | name |
+| staff | user_id, display_name, role, active |
+| staff_invitations | email, role, token_hash, invited_by, approved_by, approved_at, expires_at, accepted_at |
+| properties | title, address, property_type, transaction_type, price, deposit, area_m2, status, description |
+| customers | name, phone, email, status, notes |
+| property_images | property_id, storage_path, caption, sort_order |
+| customer_requirements | customer_id, transaction_type, preferred_area, min_price, max_price, min_area_m2, notes |
+| matches | property_id, customer_id, score, status, notes |
+| appointments | property_id, customer_id, title, starts_at, ends_at, status, notes |
+| consultations | customer_id, property_id, consulted_at, summary |
+| contracts | property_id, customer_id, contract_number, amount, signed_at, status, notes |
+| tasks | customer_id, property_id, title, due_at, status, notes |
+
+공통: 모든 테이블은 UUID id, created_at, updated_at을 갖습니다. offices 외에는 office_id가 있고, 직원·초대 외의 업무 테이블에는 assigned_staff_id가 있습니다. 금액은 원 단위 numeric(16,0), 면적은 제곱미터 numeric(12,2), 날짜 시각은 timestamptz입니다. 계약일만 date입니다. 선택/필수 및 열거 값의 전체 정의는 마이그레이션 SQL을 참고하세요.

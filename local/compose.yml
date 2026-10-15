@@ -1,0 +1,85 @@
+name: estatematch
+services:
+  db:
+    image: postgres:17
+    container_name: estatematch-db
+    environment:
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:?Run node scripts/init-local.mjs}
+      POSTGRES_DB: postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./bootstrap.sql:/docker-entrypoint-initdb.d/00-bootstrap.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  auth:
+    image: ghcr.io/supabase/gotrue:v2.197.0
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://127.0.0.1:54321/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${LOCAL_DB_PASSWORD}@db:5432/postgres?search_path=auth
+      GOTRUE_DB_NAMESPACE: auth
+      GOTRUE_SITE_URL: http://127.0.0.1:3000
+      GOTRUE_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: 'true'
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      GOTRUE_MAILER_AUTOCONFIRM: 'true'
+    depends_on:
+      db: {condition: service_healthy}
+  rest:
+    image: ghcr.io/supabase/postgrest:v16.4
+    environment:
+      PGRST_DB_URI: postgres://postgres:${LOCAL_DB_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      PGRST_DB_EXTRA_SEARCH_PATH: public,extensions
+    depends_on:
+      db: {condition: service_healthy}
+  storage:
+    image: ${ESTATEMATCH_STORAGE_IMAGE:-ghcr.io/supabase/storage-api:v1.82.1}
+    environment:
+      ANON_KEY: ${LOCAL_ANON_KEY}
+      SERVICE_KEY: ${LOCAL_SERVICE_KEY}
+      AUTH_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      DATABASE_URL: postgres://postgres:${LOCAL_DB_PASSWORD}@db:5432/postgres
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      FILE_SIZE_LIMIT: 10485760
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: estatematch-local
+      REGION: local
+      GLOBAL_S3_BUCKET: local
+      ENABLE_IMAGE_TRANSFORMATION: 'false'
+      DATABASE_SEARCH_PATH: storage
+    volumes:
+      - images:/var/lib/storage
+    depends_on:
+      db: {condition: service_healthy}
+      auth: {condition: service_started}
+  gateway:
+    image: ghcr.io/supabase/kong:2.8.1
+    ports:
+      - '127.0.0.1:54321:8000'
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 'off'
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: bundled
+    volumes:
+      - ./kong.yml:/kong.yml:ro
+    depends_on: [auth,rest,storage]
+volumes:
+  db:
+  images:
