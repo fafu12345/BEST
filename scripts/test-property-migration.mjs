@@ -22,15 +22,16 @@ try {
  ('40000000-0000-0000-0000-000000000082','10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000003','legacy rent','officetel','rent',1000000,5000000,'  한솔2차   오피스텔  '),
  ('40000000-0000-0000-0000-000000000083','10000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000003','blank building','officetel','sale',250000000,0,'   ');
  create schema upgrade_test;
- create table upgrade_test.before as select id,price,deposit,area_m2,version,created_at,last_confirmed_at from public.properties;
+ create table upgrade_test.before as select id,office_id,assigned_staff_id,address,price,deposit,area_m2,version,created_at,last_confirmed_at from public.properties;
  create table upgrade_test.audit_count as select count(*) n from public.property_change_history;
  update public.staff set active=false where id='30000000-0000-0000-0000-000000000003';`);
  for(const name of migrations.filter(x=>x>='202610150004'))sql(readFileSync('supabase/migrations/'+name,'utf8'));
  sql(`do $$ begin
- if exists(select 1 from upgrade_test.before b join public.properties p using(id) where row(b.price,b.deposit,b.area_m2,b.version,b.created_at,b.last_confirmed_at) is distinct from row(p.price,p.deposit,p.area_m2,p.version,p.created_at,p.last_confirmed_at)) then raise exception 'Legacy values were modified'; end if;
+ if exists(select 1 from upgrade_test.before b join public.properties p using(id) where row(b.office_id,b.assigned_staff_id,b.address,b.price,b.deposit,b.area_m2,b.version,b.created_at,b.last_confirmed_at) is distinct from row(p.office_id,p.assigned_staff_id,p.address,p.price,p.deposit,p.area_m2,p.version,p.created_at,p.last_confirmed_at)) then raise exception 'Legacy values were modified'; end if;
  if (select count(distinct building_id) from public.properties where id in ('40000000-0000-0000-0000-000000000081','40000000-0000-0000-0000-000000000082'))<>1 then raise exception 'Building backfill did not deduplicate'; end if;
  if (select building_id is not null from public.properties where id='40000000-0000-0000-0000-000000000083') then raise exception 'Whitespace name must not become a choice'; end if;
  if (select count(*) from public.property_change_history)<>(select n from upgrade_test.audit_count) then raise exception 'Migration fabricated history'; end if;
+ if exists(select 1 from public.properties where bathroom_count is not null or desired_transaction_date is not null or desired_transaction_note<>'') then raise exception 'Migration invented bathroom or timing data'; end if;
  if exists(select 1 from pg_trigger where tgrelid='public.properties'::regclass and tgname in ('property_guard','property_audit') and tgenabled<>'O') then raise exception 'Business triggers not restored'; end if;
  if exists(select 1 from pg_tables where schemaname='public' and not rowsecurity) then raise exception 'RLS disabled'; end if;
  end $$;

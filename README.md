@@ -91,3 +91,9 @@ DB 테스트는 실제 PostgreSQL에서 authenticated/anon/service_role로 역�
 통합 테스트는 실제 Auth 로그인·공개 가입 차단, PostgREST 격리, 로그인 후 대시보드, Next 초대·승인·가입 API, Storage 업로드·다운로드를 검증합니다. `.env.local`의 **로컬** 주소만 허용합니다. 신규 가상 사용자·초대와 파일은 테스트 후 정리합니다.
 
 경량 구성을 중단하려면 `docker compose --env-file local/.env -f local/compose.yml stop`을 실행합니다. 재시작은 `bash scripts/start-local.sh`입니다. 데이터는 Docker 볼륨에 보존됩니다. 표준 CLI 모드에서만 `npx supabase db reset --local`(로컬 데이터 삭제 후 재적용), `npx supabase stop`을 사용합니다. 실행 결과와 남은 제한은 `docs/validation.md`를 확인하세요.
+
+## v2.0 전환 방향
+
+매물·계약·당사자·만기·재계약·이전 고객을 관리하는 업무 시스템으로 전환합니다. 현재 구현 분석, 추가 테이블, 화면 메뉴와 3단계 마이그레이션 계획은 [전환 분석서](docs/v2-development-plan.md)를 참고하세요. 계약 업무 화면은 아직 구현 전이며 기존 매칭 데이터는 보존합니다.
+
+매물 등록은 아파트·오피스텔에 방 수/화장실 수를 제공하고 주소 입력을 생략합니다. 기존 주소는 유지됩니다. 모든 거래 유형에 희망 날짜와 일정 메모를 입력할 수 있습니다. 날짜 미정이면 메모만 기록하세요. 기존 DB에는 `bash scripts/start-local.sh`로 추가 마이그레이션 005를 적용한 뒤 Next 서버를 다시 실행하세요. 데이터 초기화는 필요하지 않습니다. 추가 검사는 `npm run test:property-schedule`입니다.

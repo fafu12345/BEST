@@ -13,6 +13,7 @@
     "test:properties": "node scripts/test-properties.mjs",
     "test:property-ui": "node scripts/test-property-ui.mjs",
     "test:property-buildings": "node scripts/test-property-buildings.mjs",
+    "test:property-schedule": "node scripts/test-property-schedule.mjs",
     "test:property-migration": "node scripts/test-property-migration.mjs"
   },
   "dependencies": {

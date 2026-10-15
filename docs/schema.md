@@ -37,3 +37,7 @@
 ## 2단계 확장
 
 기본 12개 테이블과 데이터를 유지하고 매물 변경 이력과 유형별 건물·단지 보기 테이블 2개를 추가했습니다. 현재 업무 테이블은 14개입니다. 전체 필드·권한·소프트 삭제 정책은 [2단계 명세](property-management.md)를 참고하세요.
+
+## 005 매물 입력 확장
+
+`properties.bathroom_count`는 nullable integer(0~100), `desired_transaction_date`는 nullable date, `desired_transaction_note`는 최대 500자 text(기본 빈 문자열)입니다. 기존 행의 날짜·화장실 수는 미입력 상태로 보존합니다. 기존 주소 컬럼과 RLS는 유지하며 아파트·오피스텔 화면에서 주소 입력만 생략합니다. 희망 일정은 확정 계약의 만기·잔금일과 별도입니다. v2.0 계약 구조는 [전환 분석서](v2-development-plan.md)의 3단계 계획을 참조하세요.

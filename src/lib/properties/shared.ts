@@ -7,7 +7,7 @@ const money = z.number().int().min(0).max(9_000_000_000_000_000);
 const text = (max: number) => z.string().trim().max(max);
 export const propertyInput = z.object({
   building_id: z.guid().nullable().optional(), store_name: text(200).optional(), monthly_rent: money.optional(),
-  title: text(200).min(1), building_name: text(200), address: text(500).min(4),
+  title: text(200).min(1), building_name: text(200), address: text(500),
   property_type: z.enum(['retail', 'office', 'apartment', 'officetel']),
   transaction_type: z.enum(['sale', 'lease', 'rent']), price: money, deposit: money,
   area_m2: z.number().positive().max(9_999_999_999.99).refine(n => Math.abs(n * 100 - Math.round(n * 100)) < 0.001, '면적은 소수점 두 자리까지 입력하세요.'),
@@ -15,8 +15,10 @@ export const propertyInput = z.object({
   status: z.enum(['available', 'reserved', 'closed', 'on_hold']), description: text(10000),
   premium: money, business_type: text(100), facilities: text(5000), complex_name: text(200),
   building_dong: text(40), unit_number: text(40), room_count: z.number().int().min(0).max(100).nullable(),
+  bathroom_count: z.number().int().min(0).max(100).nullable().optional(),
+  desired_transaction_date: z.iso.date().nullable().optional(), desired_transaction_note: text(500).optional(),
   assigned_staff_id: z.guid().optional(), confirm: z.boolean().default(false),
-}).strict().refine(p => p.floor === null || p.total_floors === null || p.floor <= p.total_floors, { message: '현재 층이 전체 층보다 높습니다.', path: ['floor'] });
+}).strict().refine(p => ['apartment','officetel'].includes(p.property_type) || p.address.length >= 4, { message: '주소는 4자 이상 입력하세요.', path: ['address'] }).refine(p => p.floor === null || p.total_floors === null || p.floor <= p.total_floors, { message: '현재 층이 전체 층보다 높습니다.', path: ['floor'] });
 export const updateInput = z.object({ property: propertyInput, version: z.number().int().positive() }).strict();
 export type PropertyInput = z.infer<typeof propertyInput>;
 export type Property = Omit<PropertyInput, 'confirm' | 'assigned_staff_id' | 'monthly_rent' | 'building_id' | 'store_name'> & {

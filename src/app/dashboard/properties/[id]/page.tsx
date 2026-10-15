@@ -18,10 +18,10 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
   if (staffResult.error || fileResult.error || historyResult.error) throw new Error('관련 정보를 불러오지 못했습니다.');
   const names = new Map(staffResult.data?.map(s => [s.id,s.display_name])); const editable = canEdit(staff,p);
   const financial=propertyPriceLabel(p);
-  const rows: [string, string][] = [['유형 / 거래',`${propertyTypes[p.property_type] ?? p.property_type} / ${transactionTypes[p.transaction_type]}`],['건물·단지명',p.building_name || '-'],['호실',p.unit_number || '-'],['주소',p.address || '-'],['전용면적',areaLabel(p.area_m2)],['해당 / 전체 층',`${p.floor ?? '-'} / ${p.total_floors ?? '-'}층`],['담당 직원',names.get(p.assigned_staff_id) ?? '-'],['최종 확인',dateLabel(p.last_confirmed_at)],['등록일',dateLabel(p.created_at)]];
+  const rows: [string, string][] = [['유형 / 거래',`${propertyTypes[p.property_type] ?? p.property_type} / ${transactionTypes[p.transaction_type]}`],['건물·단지명',p.building_name || '-'],['호실',p.unit_number || '-'],['주소',p.address || '-'],['전용면적',areaLabel(p.area_m2)],['해당 / 전체 층',`${p.floor ?? '-'} / ${p.total_floors ?? '-'}층`],['담당 직원',names.get(p.assigned_staff_id) ?? '-'],['최종 확인',dateLabel(p.last_confirmed_at)],['등록일',dateLabel(p.created_at)],['거래 희망일',p.desired_transaction_date || '미정'],['거래 일정 메모',p.desired_transaction_note || '-']];
   if (p.property_type === 'retail') rows.push(['상호',p.store_name || '-'],['권리금',moneyLabel(p.premium)],['업종',p.business_type || '-'],['시설',p.facilities || '-']);
   if (['apartment','officetel'].includes(p.property_type)) rows.push(['동',p.building_dong || '-']);
-  if (['apartment','officetel'].includes(p.property_type)) rows.push(['방 수',p.room_count === null ? '-' : `${p.room_count}개`]);
+  if (['apartment','officetel'].includes(p.property_type)) rows.push(['방 수',p.room_count === null ? '-' : `${p.room_count}개`],['화장실 수',p.bathroom_count == null ? '-' : `${p.bathroom_count}개`]);
   function historyValue(key: string, value: string | number | null | undefined) {
     if (value === null || value === undefined) return '-';
     if (['price','deposit','premium','monthly_rent'].includes(key)) return moneyLabel(Number(value));

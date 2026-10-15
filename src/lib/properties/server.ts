@@ -17,7 +17,7 @@ export function mutationValues(input: PropertyInput, existing?: {transaction_typ
   if (values.property_type !== 'retail') { values.premium = 0; values.business_type = ''; values.facilities = ''; }
   if (!['apartment','officetel'].includes(values.property_type)) { values.complex_name = ''; values.building_dong = ''; }
   if (values.property_type !== 'retail') values.store_name = '';
-  if (!['apartment', 'officetel'].includes(values.property_type)) values.room_count = null;
+  if (!['apartment', 'officetel'].includes(values.property_type)) { values.room_count = null; values.bathroom_count = null; }
   // Keep old API payloads and stored price semantics readable while adding rental income to every transaction type.
   if (values.transaction_type === 'lease') {
     if (values.monthly_rent === undefined) values.deposit = values.price;
