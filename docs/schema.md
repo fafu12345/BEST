@@ -64,3 +64,10 @@ contract_renewals, relocation_cases 4개를 더해 공개 업무 테이블은 �
 모든 새 테이블은 office_id 복합 FK, RLS, 인덱스와 불변/버전/담당자 검증을 포함합니다.
 expiration_directory는 호출자 RLS를 적용하는 SECURITY INVOKER 뷰입니다.
 정확한 필드는 011 SQL, 흐름과 제약은 [5단계 안내](expiration-management.md)를 참고하세요.
+
+## 6단계 추가 (012)
+
+properties.next_confirmation_date(date, nullable)를 추가합니다. 기존 행의 값·버전·이력은 변경하지 않습니다.
+새 업무 테이블은 없고 기존 21개 테이블의 RLS를 유지합니다. dashboard_core/dashboard_workflow는
+호출자 권한으로 전체 집계하며 property_related_customers/customer_followup_links도 호출자 RLS를 적용합니다.
+정확한 집계 기준과 기본 담당 범위는 [대시보드 안내](dashboard.md)를 참고하세요.

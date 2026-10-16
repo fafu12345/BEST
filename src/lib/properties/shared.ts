@@ -16,6 +16,7 @@ export const propertyInput = z.object({
   premium: money, business_type: text(100), facilities: text(5000), complex_name: text(200),
   building_dong: text(40), unit_number: text(40), room_count: z.number().int().min(0).max(100).nullable(),
   bathroom_count: z.number().int().min(0).max(100).nullable().optional(),
+  next_confirmation_date:z.iso.date().nullable().optional(),
   desired_transaction_date: z.iso.date().nullable().optional(), desired_transaction_note: text(500).optional(),
   assigned_staff_id: z.guid().optional(), confirm: z.boolean().default(false),
 }).strict().refine(p => ['apartment','officetel'].includes(p.property_type) || p.address.length >= 4, { message: '주소는 4자 이상 입력하세요.', path: ['address'] }).refine(p => p.floor === null || p.total_floors === null || p.floor <= p.total_floors, { message: '현재 층이 전체 층보다 높습니다.', path: ['floor'] });
@@ -60,3 +61,5 @@ export function propertyPriceLabel(p: { transaction_type: string; price: number;
   const rental=`보증금 ${moneyLabel(f.deposit)} / 월 ${moneyLabel(f.monthlyRent)}`;
   return p.transaction_type==='sale' ? `매매 ${moneyLabel(f.salePrice)}${f.deposit || f.monthlyRent ? ` · 임대 ${rental}` : ''}` : rental;
 }
+
+export function propertyCheckDate(p:{next_confirmation_date?:string|null;last_confirmed_at:string|null;created_at:string}){if(p.next_confirmation_date)return p.next_confirmation_date;const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(p.last_confirmed_at??p.created_at));const day=new Date(date+'T00:00:00Z');if(p.last_confirmed_at)day.setUTCDate(day.getUTCDate()+30);return day.toISOString().slice(0,10);}

@@ -33,7 +33,7 @@ ok(invalidLogin.status===303&&invalidLogin.headers.get('location')==='/login?err
 const owner=await actor('owner'),manager=await actor('manager'),agent1=await actor('agent1'),agent2=await actor('agent2'),other=await actor('other-owner');
 for(const [name,a,n] of [['owner',owner,2],['manager',manager,2],['agent1',agent1,2],['agent2',agent2,2],['other',other,1]]){
  const {data,error}=await a.db.from('properties').select('id');ok(!error&&data.length===n,`${name}: office-isolated REST`);
- const response=await fetch(app+'/dashboard',{headers:{Cookie:[...a.jar].map(([k,v])=>`${k}=${v}`).join('; ')}});ok(response.status===200&&(await response.text()).includes('사무소 매물'),`${name}: authenticated dashboard`);
+ const response=await fetch(app+'/dashboard',{headers:{Cookie:[...a.jar].map(([k,v])=>`${k}=${v}`).join('; ')}});ok(response.status===200&&(await response.text()).includes('통합 업무 대시보드'),`${name}: authenticated dashboard`);
 }
 const signup=await createClient(url,key).auth.signUp({email:'forbidden@estatematch.test',password:'EstateMatch-Test-2026!'});ok(!!signup.error,'public signup disabled');
 ok((await post('/api/staff/invitations',{email:'bad@estatematch.test',role:'agent'},agent1)).status===403,'agent cannot invite');

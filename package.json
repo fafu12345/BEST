@@ -23,7 +23,9 @@
     "test:customer-address-selection": "node scripts/test-customer-address-selection.mjs",
     "test:expiration": "node scripts/test-expiration.mjs",
     "test:expiration-ui": "node scripts/test-expiration-ui.mjs",
-    "test:expiration-migration": "node scripts/test-expiration-migration.mjs"
+    "test:expiration-migration": "node scripts/test-expiration-migration.mjs",
+    "test:dashboard": "node scripts/test-dashboard.mjs",
+    "test:dashboard-ui": "node scripts/test-dashboard-ui.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -35,7 +35,7 @@ try {
  sql(`do $$begin
  if exists(select 1 from upgrade_test.before_contracts b left join public.contracts c using(id) where c.id is null or to_jsonb(c) is distinct from b.value) then raise exception 'Contract data changed during expiration backfill';end if;
  if exists(select 1 from upgrade_test.before_customers b left join public.customers c using(id) where c.id is null or to_jsonb(c) is distinct from b.value) then raise exception 'Customer data changed';end if;
- if exists(select 1 from upgrade_test.before_properties b left join public.properties c using(id) where c.id is null or to_jsonb(c) is distinct from b.value) then raise exception 'Property data changed';end if;
+ if exists(select 1 from upgrade_test.before_properties b left join public.properties c using(id) where c.id is null or (select jsonb_object_agg(key,to_jsonb(c)->key) from jsonb_each(b.value)) is distinct from b.value) then raise exception 'Property data changed';end if;
  if (select count(*) from public.expiration_tasks where contract_id='b0000000-0000-0000-0000-000000000081')<>4 then raise exception 'Existing lease tasks missing for inactive assignee';end if;
  if exists(select 1 from public.expiration_tasks where scheduled_date<>base_end_date-reminder_days) then raise exception 'Backfill schedules wrong';end if;
  if exists(select 1 from public.contract_followups where contract_id<>'b0000000-0000-0000-0000-000000000081') then raise exception 'Backfill included archived/untyped contracts';end if;

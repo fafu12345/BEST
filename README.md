@@ -1,6 +1,6 @@
 # EstateMatch
 
-공인중개사무소별 데이터 격리·직원 권한과 매물·고객·계약과 5단계 만기·갱신·이전관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
+공인중개사무소별 데이터 격리·직원 권한과 매물·고객·계약과 6단계 통합 업무 대시보드와 만기·갱신·이전관리를 구현한 프로젝트입니다. Next.js App Router, TypeScript, Tailwind CSS, Supabase PostgreSQL/Auth/Storage를 사용합니다. 외부 이메일·매물 연동이나 실제 개인정보, 유료 서비스는 사용하지 않습니다.
 
 ## 실행
 
@@ -19,6 +19,14 @@ npm run dev
 표준 Supabase CLI도 `supabase/config.toml`에 구성되어 있습니다. 충분한 디스크가 있는 별도 환경에서는 `npx supabase start`와 `node scripts/local-env.mjs`를 사용할 수 있습니다. 두 구성을 같은 포트에서 동시에 실행하지 마세요. CLI 전체 구성은 이 환경에서 검증하지 못했습니다. CLI 모드의 DB 테스트는 `ESTATEMATCH_DB_CONTAINER=supabase_db_BEST npm run test:db`로 실행합니다.
 
 `/login`에서 로그인하고 `/dashboard`에서 사무소 매물과 관리자용 초대 화면을 확인합니다. `/join`은 승인된 토큰으로 가입하는 화면입니다. 로그인 후 **매물관리 열기**에서 매물 등록·검색·수정·사진/도면·이력·소프트 삭제를 사용할 수 있습니다. 등록은 **유형 → 직접 추가한 건물·단지 보기 → 호실(상가는 상호 추가)** 순서입니다. 매매는 매매가격·보증금·월세, 전세·월세는 보증금·월세를 입력합니다. 상단 **고객관리** 또는 대시보드 **고객관리 열기**에서 개인·법인 고객, 상담·연락 이력, 다음 연락 일정을 관리합니다. 개인정보 처리 기록 입력·표시는 사용자 요청에 따라 제거했습니다. [3단계 고객관리 안내](docs/customer-management.md)를 확인하세요. [2단계 사용·업데이트 안내](docs/property-management.md)를 확인하세요.
+
+## 통합 업무 대시보드
+
+로그인 후 매물·계약·만기·고객의 실제 DB 수치, 오늘 연락, 담당자별 우선순위와 만기 캘린더를 확인합니다.
+직원은 본인 담당, 대표·관리자는 사무소 전체가 기본이며 담당자 필터를 제공합니다.
+매물 등록·수정에서 다음 재확인일을 지정하고, 매물/고객 상세에서 관련 계약·고객·이전 이력으로 이동합니다.
+가짜 수치와 자동 매칭을 사용하지 않습니다. 조회 실패는 0건 대신 ‘조회 불가’로 표시합니다.
+집계 기준·실행·오류 복구는 [6단계 안내](docs/dashboard.md)를 확인하세요.
 
 ## 만기·갱신·이전관리
 
@@ -55,6 +63,7 @@ seed는 로컬 개발 전용입니다. 실제 서비스에 적용하지 마세�
 - `supabase/migrations/202610150009_contract_documents.sql`: 비공개 계약 서류·원본 보호·다운로드 접근 감사
 - `supabase/migrations/202610150010_customer_address_contract_display.sql`: 고객 주소, 부동산명·동·호실 계약 표시
 - `supabase/migrations/202610150011_expiration_management.sql`: 만기 업무·연락·퇴거·갱신·이전관리, 기존 임대차 업무 생성
+- `supabase/migrations/202610160012_work_dashboard.sql`: 재확인 예정일, RLS를 적용한 실제 집계 및 상세 연결 RPC
 - `supabase/seed.sql`: 가상 사무소 두 곳, 직원 5명, 업무 데이터
 
 SQL은 Supabase의 `auth.users`, `auth.uid()`, `storage` 스키마 및 기본 역할을 전제로 합니다. 일반 빈 PostgreSQL에 바로 적용하는 SQL이 아닙니다. 로컬 시작 스크립트 또는 Supabase CLI로 실행하면 Auth/Storage 스키마 준비 후 순서대로 실행됩니다. 원격 DB 적용·배포는 수행하지 않습니다.

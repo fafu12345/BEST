@@ -16,4 +16,4 @@ export async function proxy(request: NextRequest) {
  await db.auth.getUser();
  return response;
 }
-export const config = { matcher: ['/dashboard/:path*', '/api/staff/:path*', '/api/properties/:path*', '/api/property-buildings/:path*', '/api/customers/:path*', '/api/contracts/:path*', '/api/expiration/:path*', '/api/relocations/:path*'] };
+export const config = { matcher: ['/dashboard/:path*', '/api/staff/:path*', '/api/properties/:path*', '/api/property-buildings/:path*', '/api/customers/:path*', '/api/contracts/:path*', '/api/dashboard/:path*', '/api/expiration/:path*', '/api/relocations/:path*'] };
