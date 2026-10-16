@@ -2,10 +2,12 @@ import { z } from 'zod';
 
 export const propertyTypes = { retail: '상가', office: '사무실', apartment: '아파트', officetel: '오피스텔' } as const;
 export const transactionTypes = { sale: '매매', lease: '전세', rent: '월세' } as const;
+export const directions={south:'남향',north:'북향',west:'서향',east:'동향'} as const;
 export const statuses = { available: '거래 가능', reserved: '계약 진행', closed: '거래 완료', on_hold: '보류' } as const;
 const money = z.number().int().min(0).max(9_000_000_000_000_000);
 const text = (max: number) => z.string().trim().max(max);
 export const propertyInput = z.object({
+  direction:z.enum(['south','north','west','east']).nullable().optional(),
   remarks:text(2000).optional(),owner_name:text(100).optional(),owner_phone:text(40).regex(/^[0-9+()\s-]*$/).optional(),
   building_id: z.guid().nullable().optional(), store_name: text(200).optional(), monthly_rent: money.optional(),
   title: text(200).min(1), building_name: text(200), address: text(500),

@@ -11,6 +11,7 @@
     "test:db": "bash scripts/test-db.sh",
     "test:integration": "node scripts/test-integration.mjs",
     "test:properties": "node scripts/test-properties.mjs",
+    "test:property-direction": "node scripts/test-property-direction.mjs",
     "test:property-ui": "node scripts/test-property-ui.mjs",
     "test:property-buildings": "node scripts/test-property-buildings.mjs",
     "test:property-schedule": "node scripts/test-property-schedule.mjs",
