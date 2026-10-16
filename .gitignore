@@ -45,3 +45,7 @@ supabase/.temp/
 supabase/.branches/
 
 __pycache__/
+
+# Encrypted backups and incomplete archives are never source artifacts.
+*.embackup
+*.embackup.partial

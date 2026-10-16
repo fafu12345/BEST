@@ -11,12 +11,14 @@ export async function customerTarget(c:Awaited<ReturnType<typeof propertyContext
  if(error)return {error:Response.json({error:'고객을 조회하지 못했습니다.'},{status:500})};
  if(!data)return {error:Response.json({error:'고객을 찾을 수 없습니다.'},{status:404})};
  if(edit&&!canEdit(c.staff,data))return {error:Response.json({error:'담당자 또는 대표·관리자만 변경할 수 있습니다.'},{status:403})};
+ const audit=await c.db.rpc('record_customer_access',{p_customer:id});if(audit.error)return {error:Response.json({error:'고객 접근기록 저장 실패: 014 DB 업데이트를 확인하세요.'},{status:503})};
  return {customer:data};
 }
 const filters=z.object({q:z.string().trim().max(200).default(''),kind:z.enum(['','individual','company']).default(''),assigned:z.union([z.literal(''),z.guid()]).default(''),sort:z.enum(['name','newest','updated','next_contact','retention']).default('updated'),contact:z.enum(['','overdue','upcoming','unscheduled']).default(''),page:z.coerce.number().int().min(1).max(100000).default(1)});
 export async function customerList(db:Awaited<ReturnType<typeof supabaseServer>>,raw:Record<string,unknown>){
  const parsed=filters.safeParse(raw);const f=parsed.success?parsed.data:filters.parse({});
  if(!parsed.success)return {data:[],count:0,filters:f,error:'검색 조건을 확인하세요.'};
+ const audit=await db.rpc('record_customer_access',{p_customer:null});if(audit.error)return {data:[],count:0,filters:f,error:'고객 접근기록 저장 실패: 014 DB 업데이트를 확인하세요.'};
  const sort={name:'name',newest:'created_at',updated:'updated_at',next_contact:'next_contact_at',retention:'updated_at'}[f.sort];
  let q=db.from('customers').select('id,name,company_name,customer_kind,address,version,phone,email,status,assigned_staff_id,next_contact_at,updated_at',{count:'exact'}).is('deleted_at',null).order(sort,{ascending:['name','next_contact'].includes(f.sort),nullsFirst:false}).order('id');
  if(f.q)q=q.ilike('search_text',`%${f.q.replace(/[\\%_]/g,'\\$&')}%`);

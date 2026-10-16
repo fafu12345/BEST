@@ -75,3 +75,18 @@ properties.next_confirmation_date(date, nullable)를 추가합니다. 기존 행
 ## 계약 일정 자동 반영 (013)
 
 공개 업무 테이블은 21개를 유지합니다. `private.property_contract_schedules`는 날짜가 완성된 계약이 연결된 매물을 추적하는 내부 전용 등록부입니다. 앱 역할에는 접근 권한을 주지 않습니다. 신규·일정 변경 전월세 계약의 입주일·임대차 시작일은 잔금일로 정규화하고, 기존 역사 데이터는 일괄 수정하지 않습니다. 시스템 트리거·서버 예약 작업이 날짜에 따른 매물 상태만 갱신합니다. 상세 규칙은 [계약 일정 안내](contract-schedule.md)를 확인하세요.
+
+## 7단계 추가 (014)
+
+공개 업무 테이블은 25개이며 모두 RLS를 사용합니다. 기존 매물·계약·고객 행을 일괄 수정하거나 삭제하지 않습니다.
+
+- notification_receipts: office_id/staff_id/notice_key 복합 PK, 개인별 read/dismissed와 updated_at. 같은 사무소라도 다른 직원의 읽음 상태는 변경하지 못합니다.
+- contract_payments: 실제 수납/환불 방향, 원 단위 금액, 실제 일자, 메모, 실제 actor_id, idempotency_key. 불변 원장과 사무소·계약 복합 FK, 계약 잠금·버전/재전송/환불 잔액 검사.
+- relocation_contract_links: 이전 건/기존 계약/신규 계약/고객/실제 actor 관계. 같은 사무소 복합 FK, 다른 매물과 신규 계약 당사자 검증, 불변 연결.
+- access_audit_events: 고객 앱 접근과 매물 변경이력 삭제의 직원·대상 ID·시각. 개인정보 원문 없이 저장하고 대표·관리자만 조회. 클라이언트 insert/update/delete 불가.
+- contract_followups.review_checks/review_note: 개별 계약 확인 항목 JSON boolean과 근거 메모. 기존 담당 RLS·버전·감사 트리거 재사용. 법률상 기한을 새로 계산하지 않습니다.
+- notification_directory는 security_invoker 뷰입니다. operations_notifications/operations_statistics/contract_financial_summary/record_contract_payment/link_relocation_contract는 SECURITY INVOKER입니다.
+- record_customer_access 및 내부 감사/확인 함수의 제한된 SECURITY DEFINER는 활성 사무소·직원·대상을 검증하고 접근 기록 또는 메타데이터 잠금만 수행합니다. 업무 데이터를 관리자 키로 읽는 API를 추가하지 않았습니다.
+- save_contract는 선택적 당사자 customer_version 검사와 고객 행 잠금을 추가합니다. 보관된 기존 당사자는 유지하지만 신규 연결은 기존 party_guard에서 계속 차단합니다.
+
+정확한 함수·인덱스·제약은 014 SQL, [화면과 집계 의미](operations.md), [백업 범위](backup-recovery.md)를 확인하세요.

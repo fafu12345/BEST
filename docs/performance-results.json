@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-16T03:37:58.889Z",
+  "synthetic": {
+    "properties": 1000,
+    "customers": 500,
+    "contracts": 1500
+  },
+  "measurements": {
+    "statistics": {
+      "requests": 10,
+      "p50_ms": 130,
+      "p95_ms": 142,
+      "max_response_bytes": 2127
+    },
+    "notifications": {
+      "requests": 10,
+      "p50_ms": 121,
+      "p95_ms": 142,
+      "max_response_bytes": 7848
+    },
+    "dashboard": {
+      "requests": 10,
+      "p50_ms": 1442,
+      "p95_ms": 2356,
+      "max_response_bytes": 17810
+    },
+    "contracts": {
+      "requests": 10,
+      "p50_ms": 94,
+      "p95_ms": 125,
+      "max_response_bytes": 29024
+    },
+    "properties": {
+      "requests": 10,
+      "p50_ms": 79,
+      "p95_ms": 118,
+      "max_response_bytes": 5249
+    },
+    "customers": {
+      "requests": 10,
+      "p50_ms": 81,
+      "p95_ms": 122,
+      "max_response_bytes": 6750
+    }
+  },
+  "checks": 11,
+  "import_ms": 15646,
+  "expiration_query_plan": "index present"
+}

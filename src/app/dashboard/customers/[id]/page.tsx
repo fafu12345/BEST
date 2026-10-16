@@ -8,7 +8,7 @@ import { customerKinds,contactMethods,type Customer,type Consultation } from '@/
 import { ConsultationForm } from '@/components/customers/consultation-form';
 import { ArchiveCustomer } from '@/components/customers/archive-customer';
 export default async function Page({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<Record<string,string|undefined>>}){
- const c=await customerContext();if(c.error)redirect('/login');const {id}=await params;const target=await customerTarget(c,id);if(target.error){if(target.error.status!==404)throw new Error('고객 조회 실패');notFound();}const customer=target.customer as Customer;const editable=canEdit(c.staff,customer);
+ const c=await customerContext();if(c.error)redirect('/login');const {id}=await params;const target=await customerTarget(c,id);if(target.error){if(target.error.status===404)notFound();return <section className="panel" role="alert">{(await target.error.json()).error}</section>;}const customer=target.customer as Customer;const editable=canEdit(c.staff,customer);
  const search=await searchParams;const rawRelatedPage=Number(search.relatedPage??1);const relatedPage=Number.isSafeInteger(rawRelatedPage)&&rawRelatedPage>0&&rawRelatedPage<=100000?rawRelatedPage:1;
  const rawPage=Number(search.historyPage??1);const page=Number.isSafeInteger(rawPage)&&rawPage>0&&rawPage<=100000?rawPage:1;
  const [colleagues,history,links,options]=await Promise.all([

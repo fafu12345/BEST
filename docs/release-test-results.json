@@ -1,0 +1,187 @@
+{
+  "at": "2026-10-16T03:39:44.027Z",
+  "checks": 557,
+  "results": [
+    {
+      "suite": "test:integration",
+      "status": "passed",
+      "checks": 36,
+      "elapsed_ms": 2115,
+      "summary": [
+        "36 integration checks passed"
+      ]
+    },
+    {
+      "suite": "test:properties",
+      "status": "passed",
+      "checks": 87,
+      "elapsed_ms": 4511,
+      "summary": [
+        "87 property CRUD/security checks passed"
+      ]
+    },
+    {
+      "suite": "test:customers",
+      "status": "passed",
+      "checks": 70,
+      "elapsed_ms": 4636,
+      "summary": [
+        "70 customer API/RLS checks passed"
+      ]
+    },
+    {
+      "suite": "test:contracts",
+      "status": "passed",
+      "checks": 73,
+      "elapsed_ms": 4999,
+      "summary": [
+        "73 contract API/RLS/document checks passed"
+      ]
+    },
+    {
+      "suite": "test:expiration",
+      "status": "passed",
+      "checks": 65,
+      "elapsed_ms": 4295,
+      "summary": [
+        "65 expiration API/RLS checks passed"
+      ]
+    },
+    {
+      "suite": "test:dashboard",
+      "status": "passed",
+      "checks": 40,
+      "elapsed_ms": 4798,
+      "summary": [
+        "40 dashboard API/aggregation checks passed"
+      ]
+    },
+    {
+      "suite": "test:operations",
+      "status": "passed",
+      "checks": 42,
+      "elapsed_ms": 4493,
+      "summary": [
+        "42 operations security/workflow/statistics checks passed"
+      ]
+    },
+    {
+      "suite": "test:property-ui",
+      "status": "passed",
+      "checks": 19,
+      "elapsed_ms": 10705,
+      "summary": [
+        "19 browser workflow checks passed"
+      ]
+    },
+    {
+      "suite": "test:customer-ui",
+      "status": "passed",
+      "checks": 16,
+      "elapsed_ms": 12317,
+      "summary": [
+        "16 customer browser checks passed"
+      ]
+    },
+    {
+      "suite": "test:contract-ui",
+      "status": "passed",
+      "checks": 17,
+      "elapsed_ms": 12226,
+      "summary": [
+        "17 contract browser checks passed"
+      ]
+    },
+    {
+      "suite": "test:expiration-ui",
+      "status": "passed",
+      "checks": 12,
+      "elapsed_ms": 9666,
+      "summary": [
+        "12 expiration browser checks passed"
+      ]
+    },
+    {
+      "suite": "test:dashboard-ui",
+      "status": "passed",
+      "checks": 12,
+      "elapsed_ms": 8049,
+      "summary": [
+        "12 dashboard browser checks passed"
+      ]
+    },
+    {
+      "suite": "test:operations-ui",
+      "status": "passed",
+      "checks": 11,
+      "elapsed_ms": 9787,
+      "summary": [
+        "11 operations browser/mobile checks passed"
+      ]
+    },
+    {
+      "suite": "test:contract-schedule",
+      "status": "passed",
+      "checks": 30,
+      "elapsed_ms": 37136,
+      "summary": [
+        "30 contract schedule checks passed"
+      ]
+    },
+    {
+      "suite": "test:operations-load",
+      "status": "passed",
+      "checks": 11,
+      "elapsed_ms": 54891,
+      "summary": [
+        "11 large-data correctness/isolation/performance checks passed"
+      ]
+    },
+    {
+      "suite": "test:backup-recovery",
+      "status": "passed",
+      "checks": 14,
+      "elapsed_ms": 16626,
+      "summary": [
+        "14 encrypted backup/recovery checks passed"
+      ]
+    },
+    {
+      "suite": "test:property-migration",
+      "status": "passed",
+      "checks": null,
+      "elapsed_ms": 3298,
+      "summary": [
+        "PASS: migration preserves financial values, imports choices for inactive staff, skips blank names, preserves history and restores triggers/RLS",
+        "PASS: all migrations from empty business schema plus RLS regression suite"
+      ]
+    },
+    {
+      "suite": "test:expiration-migration",
+      "status": "passed",
+      "checks": null,
+      "elapsed_ms": 3072,
+      "summary": [
+        "PASS: 010 to 011 backfill preserves all contracts, customers and properties; generates four tasks for inactive assignee; skips archived/untyped contracts; preserves RLS"
+      ]
+    },
+    {
+      "suite": "test:contract-schedule-migration",
+      "status": "passed",
+      "checks": null,
+      "elapsed_ms": 2921,
+      "summary": [
+        "PASS: 012 to 013 preserves historical dates/customers/unrelated fields, backfills status with inactive assignee, skips incomplete legacy contracts and preserves RLS/internal-only worker"
+      ]
+    },
+    {
+      "suite": "test:archived-contract-customer",
+      "status": "passed",
+      "checks": 2,
+      "elapsed_ms": 1166,
+      "summary": [
+        "2 archived-party compatibility checks passed"
+      ]
+    }
+  ]
+}

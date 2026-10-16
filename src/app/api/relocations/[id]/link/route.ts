@@ -1,0 +1,4 @@
+import {expirationContext,dbFailure} from '@/lib/expiration/server';
+import {validId} from '@/lib/properties/server';
+import {relocationLinkInput} from '@/lib/operations/shared';
+export async function POST(r:Request,{params}:{params:Promise<{id:string}>}){const c=await expirationContext(r);if(c.error)return c.error;const {id}=await params;if(!validId(id))return new Response(null,{status:404});const p=relocationLinkInput.safeParse(await r.json().catch(()=>null));if(!p.success)return Response.json({error:p.error.issues[0].message},{status:400});const v=p.data;const saved=await c.db.rpc('link_relocation_contract',{p_case:id,p_version:v.version,p_new:v.new_contract_id,p_new_version:v.new_contract_version,p_end_source:v.end_source,p_source_version:v.source_version});if(saved.error)return dbFailure(saved.error,'신규 계약의 고객·매물·상태와 담당 권한을 확인하세요.');return Response.json({id:saved.data},{status:201});}

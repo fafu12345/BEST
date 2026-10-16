@@ -27,7 +27,15 @@
     "test:dashboard": "node scripts/test-dashboard.mjs",
     "test:dashboard-ui": "node scripts/test-dashboard-ui.mjs",
     "test:contract-schedule": "node scripts/test-contract-schedule.mjs",
-    "test:contract-schedule-migration": "node scripts/test-contract-schedule-migration.mjs"
+    "test:contract-schedule-migration": "node scripts/test-contract-schedule-migration.mjs",
+    "backup:local": "node scripts/backup-local.mjs",
+    "restore:rehearse": "node scripts/restore-backup.mjs",
+    "test:operations": "node scripts/test-operations.mjs",
+    "test:operations-ui": "node scripts/test-operations-ui.mjs",
+    "test:operations-load": "node scripts/test-operations-load.mjs",
+    "test:backup-recovery": "node scripts/test-backup-recovery.mjs",
+    "test:release": "node scripts/test-release.mjs",
+    "test:archived-contract-customer": "node scripts/test-archived-contract-customer.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

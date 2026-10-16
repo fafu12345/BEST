@@ -4,7 +4,7 @@ export const contractStatuses={draft:'작성 중',signed:'체결',active:'진행
 export const partyRoles={landlord:'임대인',tenant:'임차인',seller:'매도인',buyer:'매수인',other:'기타'} as const;
 export const documentTypes={contract:'계약서',identification:'확인 서류',receipt:'영수증',other:'기타 서류'} as const;
 const date=z.iso.date().nullable();const money=z.number().int().min(0).max(9_000_000_000_000_000);
-export const partyInput=z.object({customer_id:z.guid(),role:z.enum(['landlord','tenant','seller','buyer','other'])}).strict();
+export const partyInput=z.object({customer_id:z.guid(),role:z.enum(['landlord','tenant','seller','buyer','other']),customer_version:z.number().int().positive().optional()}).strict();
 export const contractInput=z.object({property_id:z.guid(),assigned_staff_id:z.guid().optional(),contract_number:z.string().trim().max(100),contract_type:z.enum(['sale','jeonse','monthly_rent']),status:z.enum(['draft','signed','active','completed','terminated','cancelled']),contract_date:date,occupancy_start_date:date,lease_start_date:date,lease_end_date:date,closing_date:date,sale_price_krw:money,deposit_krw:money,rent_krw:money,maintenance_fee_krw:money,brokerage_fee_krw:money,notes:z.string().trim().max(10000),previous_contract_id:z.guid().nullable(),overlap_override_reason:z.string().trim().max(1000)}).strict().superRefine((c,ctx)=>{
  if(c.lease_start_date&&c.lease_end_date&&c.lease_start_date>=c.lease_end_date)ctx.addIssue({code:'custom',message:'임대차 종료일은 시작일 이후여야 합니다.'});
  if(c.contract_date&&c.closing_date&&c.contract_date>c.closing_date)ctx.addIssue({code:'custom',message:'잔금일은 계약일 이후여야 합니다.'});

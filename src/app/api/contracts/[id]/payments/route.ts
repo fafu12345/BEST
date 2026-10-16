@@ -1,0 +1,4 @@
+import {contractContext,contractTarget} from '@/lib/contracts/server';
+import {paymentInput} from '@/lib/operations/shared';
+import {dbFailure} from '@/lib/expiration/server';
+export async function POST(r:Request,{params}:{params:Promise<{id:string}>}){const c=await contractContext(r);if(c.error)return c.error;const t=await contractTarget(c,(await params).id,true);if(t.error)return t.error;const p=paymentInput.safeParse(await r.json().catch(()=>null));if(!p.success)return Response.json({error:p.error.issues[0].message},{status:400});const v=p.data;const saved=await c.db.rpc('record_contract_payment',{p_contract:t.contract.id,p_version:v.version,p_direction:v.direction,p_amount:v.amount_krw,p_paid_on:v.paid_on,p_note:v.note,p_key:v.idempotency_key});if(saved.error)return dbFailure(saved.error,'수납일·환불 잔액·계약 버전을 확인하세요. 미래 예정 금액은 실제 수납으로 기록할 수 없습니다.');return Response.json({id:saved.data},{status:201});}
