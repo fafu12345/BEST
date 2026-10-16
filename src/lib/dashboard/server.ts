@@ -11,7 +11,18 @@ export async function loadDashboard(db:Awaited<ReturnType<typeof supabaseServer>
  const filterError=!filter.success||filters.assigned!=='all'&&!people.some(p=>p.id===filters.assigned)?'담당자와 달력 월을 확인하세요.':'';
  if(filterError||colleagues.error)return {today,filters,staff:people,core:null as Core|null,workflow:null as Workflow|null,filterError:filterError||'직원 정보를 조회하지 못했습니다.',errors:[] as {section:string;code:string}[]};
  const assigned=filters.assigned==='all'?null:filters.assigned;
- async function read<T>(name:string,args:Record<string,unknown>,section:string){try{const r=await db.rpc(name,args);if(r.error){console.error('[dashboard]',{section,code:r.error.code});return {data:null as T|null,error:{section,code:r.error.code}};}return {data:r.data as T,error:null};}catch{console.error('[dashboard]',{section,code:'CONNECTION'});return {data:null as T|null,error:{section,code:'CONNECTION'}};}}
+ async function read<T>(name:string,args:Record<string,unknown>,section:string){
+  const failed=(code:string)=>{
+   // A plain string survives Next.js console serialization. Never log raw DB errors or customer data.
+   console.warn(`[dashboard] section=${section} rpc=${name} code=${code}`);
+   return {data:null as T|null,error:{section,code}};
+  };
+  try{
+   const r=await db.rpc(name,args);
+   if(r.error)return failed(r.error.code||'UNKNOWN');
+   return {data:r.data as T,error:null};
+  }catch{return failed('CONNECTION');}
+ }
  const [core,workflow]=await Promise.all([read<Core>('dashboard_core',{p_assigned:assigned},'매물·계약·고객'),read<Workflow>('dashboard_workflow',{p_assigned:assigned,p_month:filters.month+'-01'},'만기·이전·갱신')]);
  return {today,filters,staff:people,core:core.data,workflow:workflow.data,filterError,errors:[core.error,workflow.error].filter((x):x is {section:string;code:string}=>!!x)};
 }
