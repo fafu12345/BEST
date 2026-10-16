@@ -26,7 +26,7 @@ export const propertyInput = z.object({
 export const updateInput = z.object({ property: propertyInput, version: z.number().int().positive() }).strict();
 export type PropertyInput = z.infer<typeof propertyInput>;
 export type Property = Omit<PropertyInput, 'confirm' | 'assigned_staff_id' | 'monthly_rent' | 'building_id' | 'store_name'> & {
-  building_id: string | null; store_name: string; monthly_rent: number | null; id: string; office_id: string; assigned_staff_id: string; version: number;
+  is_priority: boolean; building_id: string | null; store_name: string; monthly_rent: number | null; id: string; office_id: string; assigned_staff_id: string; version: number;
   last_confirmed_at: string | null; created_at: string; updated_at: string; deleted_at: string | null;
 };
 export type BuildingOption = { id: string; property_type: string; name: string; address?:string; total_floors?:number|null; updated_at?:string };
