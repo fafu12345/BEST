@@ -1,0 +1,71 @@
+{
+  "at": "2026-10-16T06:13:55.138Z",
+  "checks": 490,
+  "results": [
+    {
+      "suite": "test:properties",
+      "status": "passed",
+      "checks": 87
+    },
+    {
+      "suite": "test:contracts",
+      "status": "passed",
+      "checks": 73
+    },
+    {
+      "suite": "test:customers",
+      "status": "passed",
+      "checks": 71
+    },
+    {
+      "suite": "test:property-buildings",
+      "status": "passed",
+      "checks": 36
+    },
+    {
+      "suite": "test:property-contacts",
+      "status": "passed",
+      "checks": 25
+    },
+    {
+      "suite": "test:property-contacts-ui",
+      "status": "passed",
+      "checks": 10
+    },
+    {
+      "suite": "test:expiration",
+      "status": "passed",
+      "checks": 65
+    },
+    {
+      "suite": "test:contract-schedule",
+      "status": "passed",
+      "checks": 30
+    },
+    {
+      "suite": "test:property-ui",
+      "status": "passed",
+      "checks": 19
+    },
+    {
+      "suite": "test:integration",
+      "status": "passed",
+      "checks": 36
+    },
+    {
+      "suite": "test:compact-workflow",
+      "status": "passed",
+      "checks": 26
+    },
+    {
+      "suite": "test:compact-ui",
+      "status": "passed",
+      "checks": 12
+    }
+  ],
+  "migration": "Disposable DB upgrade and RLS regression passed",
+  "static_checks": [
+    "Next.js production build",
+    "ESLint"
+  ]
+}

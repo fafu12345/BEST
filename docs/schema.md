@@ -95,3 +95,8 @@ properties.next_confirmation_date(date, nullable)를 추가합니다. 기존 행
 ## 015 — 관련 고객 간편 등록과 직원 표시 이름
 
 `customers.phone2`를 추가하고 이름 없이 전화번호로 등록할 수 있게 CHECK를 확장했다. `property_contacts`는 사무소·매물·고객의 복합 FK와 출입 비밀번호, 버전, 생성/수정시각을 보관한다. 고객의 역할을 고정하지 않는다. 고객은 기존 `customers` ID를 그대로 사용하며 삭제·보관과 계약 이력 정책도 유지한다. 신규 연락처와 고객 생성/수정은 security invoker RPC로 원자 처리한다. 공개 테이블은 26개이며 모두 RLS를 사용한다. `staff.display_name`만 같은 사무소 대표·관리자에게 컬럼 단위 UPDATE를 허용한다. 자세한 적용·검증은 [015 검증 결과](property-contacts-validation.md)를 참고한다.
+
+
+## 016 — 짧은 매물 목록과 기록을 보존하는 삭제
+
+properties에 remarks/owner_name/owner_phone, property_buildings에 address/total_floors, property_contacts에 relationship, staff에 deleted_at을 추가한다. 기존 공개 테이블 26개 모두 RLS를 유지한다. 건물 주소·총층수 수정은 대표·관리자 컬럼 권한 및 RLS를 사용한다. 직원 active/deleted_at UPDATE도 기존 관리자 RLS와 별도 삭제 보호 트리거를 통과해야 한다. 계약 guard는 모든 상태의 단독 소프트 삭제를 허용하고, 종전 계약 상태와 당사자·가격·파일·갱신/이전 링크를 보존한다. 미완료 만기 업무는 취소하고 완료 기록은 유지한다. 계약·직원 삭제 감사기록은 기존 access_audit_events에 저장한다. [세부 동작과 후속 설계](compact-workflow.md)를 참고한다.

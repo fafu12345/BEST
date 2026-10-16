@@ -19,6 +19,8 @@
     "test:contract-ui": "node scripts/test-contract-ui.mjs",
     "test:customers": "node scripts/test-customers.mjs",
     "test:customer-ui": "node scripts/test-customer-ui.mjs",
+    "test:compact-workflow": "node scripts/test-compact-workflow.mjs",
+    "test:compact-ui": "node scripts/test-compact-ui.mjs",
     "test:property-contacts": "node scripts/test-property-contacts.mjs",
     "test:property-contacts-ui": "node scripts/test-property-contacts-ui.mjs",
     "test:seed-replay": "node scripts/test-seed-replay.mjs",
