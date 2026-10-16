@@ -15,3 +15,8 @@ input:focus-visible, button:focus-visible { outline: 2px solid #0f766e; outline-
   .btn-secondary { @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50; }
   .status-pill { @apply inline-flex whitespace-nowrap rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-800; }
 }
+
+@layer components {
+  .workdesk .field { @apply gap-1 text-xs; }
+  .workdesk .field input:not([type=checkbox]), .workdesk .field select, .workdesk .field textarea { @apply px-2 py-1.5; }
+}

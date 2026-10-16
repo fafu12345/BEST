@@ -100,3 +100,8 @@ properties.next_confirmation_date(date, nullable)를 추가합니다. 기존 행
 ## 016 — 짧은 매물 목록과 기록을 보존하는 삭제
 
 properties에 remarks/owner_name/owner_phone, property_buildings에 address/total_floors, property_contacts에 relationship, staff에 deleted_at을 추가한다. 기존 공개 테이블 26개 모두 RLS를 유지한다. 건물 주소·총층수 수정은 대표·관리자 컬럼 권한 및 RLS를 사용한다. 직원 active/deleted_at UPDATE도 기존 관리자 RLS와 별도 삭제 보호 트리거를 통과해야 한다. 계약 guard는 모든 상태의 단독 소프트 삭제를 허용하고, 종전 계약 상태와 당사자·가격·파일·갱신/이전 링크를 보존한다. 미완료 만기 업무는 취소하고 완료 기록은 유지한다. 계약·직원 삭제 감사기록은 기존 access_audit_events에 저장한다. [세부 동작과 후속 설계](compact-workflow.md)를 참고한다.
+
+
+## 017 — 실무 업무 화면과 통합 일정
+
+property_buildings.deleted_at을 추가하고 대표·관리자의 이름 수정·보기 삭제에 기존 RLS 및 컬럼 권한을 적용한다. 건물명 변경은 security invoker 트리거로 연결된 활성 매물의 표시명과 버전을 갱신한다. 삭제된 보기의 신규 연결은 거부하고 기존 연결은 유지한다. contract_followups.work_checks/work_note는 기존 review_checks/review_note와 독립적인 실무 기록이며 JSON 키·불리언·길이 CHECK 및 기존 워크플로 RLS·버전·감사 트리거를 사용한다. dashboard_core/dashboard_workflow는 기본 jobs에서 삭제·비활성 직원을 상위 건수 제한 전에 제외하며 명시적 담당자 필터로 과거 업무를 볼 수 있다. dashboard_workflow.closing_calendar에 해당 월 잔금일 배열을 추가하고 기존 calendar의 만기 의미는 유지한다. 공개 테이블은 26개로 모두 RLS를 유지한다. [상세 동작](practical-workdesk.md)을 참고한다.

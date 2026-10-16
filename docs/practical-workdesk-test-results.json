@@ -1,0 +1,76 @@
+{
+  "at": "2026-10-16T07:56:01.270Z",
+  "checks": 442,
+  "results": [
+    {
+      "suite": "test:workdesk",
+      "status": "passed",
+      "checks": 13
+    },
+    {
+      "suite": "test:workdesk-ui",
+      "status": "passed",
+      "checks": 9
+    },
+    {
+      "suite": "test:dashboard",
+      "status": "passed",
+      "checks": 40
+    },
+    {
+      "suite": "test:dashboard-ui",
+      "status": "passed",
+      "checks": 12
+    },
+    {
+      "suite": "test:expiration",
+      "status": "passed",
+      "checks": 65
+    },
+    {
+      "suite": "test:expiration-ui",
+      "status": "passed",
+      "checks": 12
+    },
+    {
+      "suite": "test:operations-ui",
+      "status": "passed",
+      "checks": 11
+    },
+    {
+      "suite": "test:contracts",
+      "status": "passed",
+      "checks": 73
+    },
+    {
+      "suite": "test:properties",
+      "status": "passed",
+      "checks": 87
+    },
+    {
+      "suite": "test:property-buildings",
+      "status": "passed",
+      "checks": 36
+    },
+    {
+      "suite": "test:property-contacts-ui",
+      "status": "passed",
+      "checks": 10
+    },
+    {
+      "suite": "test:compact-workflow",
+      "status": "passed",
+      "checks": 26
+    },
+    {
+      "suite": "test:compact-ui",
+      "status": "passed",
+      "checks": 12
+    },
+    {
+      "suite": "test:integration",
+      "status": "passed",
+      "checks": 36
+    }
+  ]
+}

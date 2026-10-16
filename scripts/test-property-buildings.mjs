@@ -21,7 +21,7 @@ try {
  const h2=await add('officetel',marker+' 한솔2차 오피스텔'),h3=await add('officetel',marker+' 한솔3차 오피스텔'),retail=await add('retail',marker+' 한솔상가'),foreign=await add('officetel',h2.name,other);
  const duplicate=await req('/api/property-buildings','POST',{property_type:'officetel',name:'  '+h2.name.replace(' ','  ')+'  '},a);ok(duplicate.status===200&&(await duplicate.json()).id===h2.id,'duplicate option reuses normalized existing choice');
  const shared=await (await req('/api/property-buildings?type=officetel','GET',undefined,b)).json();ok(shared.buildings.some(x=>x.id===h2.id)&&!shared.buildings.some(x=>x.id===retail.id||x.id===foreign.id),'type filtering, office sharing and tenant isolation');
- ok(!!(await a.db.from('property_buildings').update({name:'forged'}).eq('id',h2.id)).error,'ordinary choice rename blocked');
+ const deniedRename=await a.db.from('property_buildings').update({name:'forged'}).eq('id',h2.id).select('id');ok(!deniedRename.data?.length&&(await admin.from('property_buildings').select('name').eq('id',h2.id).single()).data.name===h2.name,'ordinary choice rename blocked');
  ok(!!(await a.db.from('property_buildings').insert({office_id:other.staff.office_id,property_type:'office',name:marker,created_by:a.staff.id})).error,'direct cross-office choice insert blocked');
  ok((await other.db.from('property_buildings').select('id').eq('id',h2.id)).data.length===0,'direct cross-office choice read hidden');
  ok((await req('/api/properties','POST',{...base,building_id:foreign.id},a)).status===400,'property cannot reference foreign office choice');
