@@ -71,3 +71,7 @@ properties.next_confirmation_date(date, nullable)를 추가합니다. 기존 행
 새 업무 테이블은 없고 기존 21개 테이블의 RLS를 유지합니다. dashboard_core/dashboard_workflow는
 호출자 권한으로 전체 집계하며 property_related_customers/customer_followup_links도 호출자 RLS를 적용합니다.
 정확한 집계 기준과 기본 담당 범위는 [대시보드 안내](dashboard.md)를 참고하세요.
+
+## 계약 일정 자동 반영 (013)
+
+공개 업무 테이블은 21개를 유지합니다. `private.property_contract_schedules`는 날짜가 완성된 계약이 연결된 매물을 추적하는 내부 전용 등록부입니다. 앱 역할에는 접근 권한을 주지 않습니다. 신규·일정 변경 전월세 계약의 입주일·임대차 시작일은 잔금일로 정규화하고, 기존 역사 데이터는 일괄 수정하지 않습니다. 시스템 트리거·서버 예약 작업이 날짜에 따른 매물 상태만 갱신합니다. 상세 규칙은 [계약 일정 안내](contract-schedule.md)를 확인하세요.

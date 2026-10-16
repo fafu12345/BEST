@@ -25,7 +25,9 @@
     "test:expiration-ui": "node scripts/test-expiration-ui.mjs",
     "test:expiration-migration": "node scripts/test-expiration-migration.mjs",
     "test:dashboard": "node scripts/test-dashboard.mjs",
-    "test:dashboard-ui": "node scripts/test-dashboard-ui.mjs"
+    "test:dashboard-ui": "node scripts/test-dashboard-ui.mjs",
+    "test:contract-schedule": "node scripts/test-contract-schedule.mjs",
+    "test:contract-schedule-migration": "node scripts/test-contract-schedule-migration.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

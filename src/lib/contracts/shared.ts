@@ -24,4 +24,18 @@ export type ContractDocument={id:string;document_type:keyof typeof documentTypes
 export type ContractEvent={id:string;event_type:string;event_date:string;description:string;actor_id:string|null;old_values:Record<string,unknown>|null;new_values:Record<string,unknown>|null};
 
 export function closingExclusive(date:string|null){if(!date)return null;const day=new Date(date+'T00:00:00Z');day.setUTCDate(day.getUTCDate()+1);return day.toISOString().slice(0,10);}
-export function contractNeedsReview(c:{property_review_required:boolean;status:string;lease_end_date:string|null}){const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());return c.property_review_required||(['signed','active'].includes(c.status)&&!!c.lease_end_date&&c.lease_end_date<=today);}
+export function contractNeedsReview(c:{property_review_required:boolean;status:string;lease_end_date:string|null;contract_type?:string|null;contract_date?:string|null;closing_date?:string|null}){const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());return (c.property_review_required&&(!c.contract_type||!c.contract_date||!c.closing_date||['cancelled','terminated'].includes(c.status)))||(['signed','active'].includes(c.status)&&!!c.lease_end_date&&c.lease_end_date<=today);}
+
+// Inclusive lease end: 2026-11-01 + 12 months -> 2027-10-31.
+export function leaseEndForMonths(start:string,months:number){
+ if(!z.iso.date().safeParse(start).success||!Number.isInteger(months)||months<1||months>120)return '';
+ const [year,month,day]=start.split('-').map(Number);const first=new Date(Date.UTC(year,month-1+months,1));
+ const lastDay=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+ if(day>lastDay)return new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),lastDay)).toISOString().slice(0,10);
+ return new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),day-1)).toISOString().slice(0,10);
+}
+export function leasePeriodLabel(start:string,end:string){
+ if(!z.iso.date().safeParse(start).success||!z.iso.date().safeParse(end).success||end<start)return '기간을 확인하세요';
+ for(let months=1;months<=120;months++)if(leaseEndForMonths(start,months)===end)return months%12===0?`${months/12}년 (${months}개월)`:`${months}개월`;
+ return `${Math.round((Date.parse(end)-Date.parse(start))/86400000)+1}일`;
+}

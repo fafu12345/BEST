@@ -51,6 +51,10 @@ npm run dev
 
 seed는 로컬 개발 전용입니다. 실제 서비스에 적용하지 마세요. 최초 대표 계정은 신뢰하는 운영자가 서버/DB에서 부트스트랩하며 공개 가입으로 생성하지 않습니다.
 
+## 계약 일정 자동 반영
+
+계약일부터 잔금일까지 매물은 **계약 진행**, 잔금일 다음 날부터 **거래 완료**로 자동 반영됩니다. 전월세는 입주일·시작일을 잔금일로 저장하고, 12·24개월 선택으로 종료일을 채운 뒤 직접 수정할 수 있습니다. **013 마이그레이션과 로컬 예약 컨테이너**를 위해 최신 코드에서 `bash scripts/start-local.sh`를 실행하세요. Docker 실행 중 1분마다 갱신합니다. [일정 규칙·예약 실행·실패 재처리](docs/contract-schedule.md)를 확인하세요.
+
 ## DB 명세와 마이그레이션
 
 기존 12개 테이블 명세가 대화에 없어 사용자 동의에 따라 새 초안을 설계했습니다. [설계 개요](docs/schema.md)와 다음 SQL이 정확한 필드 명세입니다.
@@ -64,6 +68,7 @@ seed는 로컬 개발 전용입니다. 실제 서비스에 적용하지 마세�
 - `supabase/migrations/202610150010_customer_address_contract_display.sql`: 고객 주소, 부동산명·동·호실 계약 표시
 - `supabase/migrations/202610150011_expiration_management.sql`: 만기 업무·연락·퇴거·갱신·이전관리, 기존 임대차 업무 생성
 - `supabase/migrations/202610160012_work_dashboard.sql`: 재확인 예정일, RLS를 적용한 실제 집계 및 상세 연결 RPC
+- `supabase/migrations/202610160013_contract_property_schedule.sql`: 계약 일정에 따른 매물 상태, 전월세 시작일 통일, 비공개 예약 작업
 - `supabase/seed.sql`: 가상 사무소 두 곳, 직원 5명, 업무 데이터
 
 SQL은 Supabase의 `auth.users`, `auth.uid()`, `storage` 스키마 및 기본 역할을 전제로 합니다. 일반 빈 PostgreSQL에 바로 적용하는 SQL이 아닙니다. 로컬 시작 스크립트 또는 Supabase CLI로 실행하면 Auth/Storage 스키마 준비 후 순서대로 실행됩니다. 원격 DB 적용·배포는 수행하지 않습니다.
