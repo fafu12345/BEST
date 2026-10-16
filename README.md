@@ -179,3 +179,5 @@ npm run dev
 ```
 
 추가 마이그레이션 `202610160015_property_contacts_staff_names.sql`을 적용합니다. DB 초기화는 필요하지 않습니다. 검증: `npm run test:property-contacts`, `npm run test:property-contacts-ui` 및 [015 검증 결과](docs/property-contacts-validation.md).
+
+관련 고객의 빈 항목은 표시하지 않습니다. `관련 고객 간편 등록 → 기존 고객 연결`에서 이름·법인명·전화번호로 기존 고객을 검색한 뒤 매물에 연결할 수 있습니다. 고객 원본과 담당자는 유지하며 출입 비밀번호는 해당 연결에만 저장합니다. 이미 연결된 고객은 중복 연결을 막습니다. **015 적용이 끝난 DB에는 이번 개선을 위한 추가 DB 업데이트가 필요 없으며**, 최신 코드로 교체 후 Next 서버를 재시작하면 됩니다.

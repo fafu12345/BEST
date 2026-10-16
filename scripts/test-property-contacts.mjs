@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createClient} from '@supabase/supabase-js';
-import {actor,create,req,cleanup,propertyInput,admin,config} from './contract-test-helpers.mjs';
+import {actor,create,req,cleanup,propertyInput,customerInput,admin,config} from './contract-test-helpers.mjs';
 const a=await actor('agent1'),b=await actor('agent2'),owner=await actor('owner'),manager=await actor('manager'),other=await actor('other-owner');
 const fixtures={properties:[],customers:[]};let checks=0;const pass=x=>console.log('PASS',++checks,x);
 const staffBefore=(await admin.from('staff').select('id,display_name,updated_at').eq('id',a.staff.id).single()).data;
@@ -32,6 +32,16 @@ try{
  const role=(await owner.db.from('staff').update({role:'owner'}).eq('id',a.staff.id));assert.ok(role.error);const office=(await owner.db.from('staff').update({office_id:other.staff.office_id}).eq('id',a.staff.id));assert.ok(office.error);pass('name permission never permits role or office changes');
  assert.equal((await req('/api/staff/'+a.staff.id,'PATCH',{display_name:'침입',updated_at:person.updated_at},other)).status,409);pass('foreign office cannot rename staff');
  r=await req(path,'DELETE',{id:link.id,version:link.version},a);assert.equal(r.status,204);assert.ok((await a.db.from('customers').select('id').eq('id',link.customer_id).single()).data);pass('unlink preserves customer record');
+ const existingCustomer=await create('/api/customers',customerInput('가상 기존 고객 '+Date.now()),b);fixtures.customers.push(existingCustomer.id);
+ const original=(await b.db.from('customers').select('*').eq('id',existingCustomer.id).single()).data;
+ const attachment={customer_id:existingCustomer.id,access_code:''};const attached=await create(path,attachment,a);
+ assert.deepEqual((await b.db.from('customers').select('*').eq('id',existingCustomer.id).single()).data,original);pass('existing office customer can be linked without changing contact details or assignment');
+ assert.equal((await req(path,'POST',{...attachment,access_code:'overwrite'},a)).status,409);assert.equal((await a.db.from('property_contacts').select('access_code').eq('id',attached.id).single()).data.access_code,'');pass('duplicate existing link is rejected without overwriting access code');
+ assert.equal((await req(path,'POST',attachment,b)).status,403);assert.equal((await req(path,'POST',attachment,other)).status,404);assert.equal((await req(path,'POST',attachment)).status,401);pass('existing linking enforces property assignee, office and authentication');
+ assert.equal((await req(path,'POST',{customer_id:'50000000-0000-0000-0000-000000000003',access_code:''},a)).status,404);pass('foreign office customer cannot be linked');
+ assert.equal((await req(path,'POST',{...attachment,office_id:other.staff.office_id},a)).status,400);assert.equal((await req(path,'POST',{...attachment,name:'overwrite'},a)).status,400);pass('existing linking rejects office injection and customer mutations');
+ assert.ifError((await b.db.from('customers').update({deleted_at:new Date().toISOString()}).eq('id',existingCustomer.id)).error);
+ assert.equal((await req(path,'POST',attachment,a)).status,404);pass('archived customer cannot be linked');
  console.log(checks+' property contacts/staff checks passed');
 }finally{
  assert.ifError((await admin.from('staff').update({display_name:staffBefore.display_name}).eq('id',a.staff.id)).error);
