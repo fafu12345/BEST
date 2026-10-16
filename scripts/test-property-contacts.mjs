@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {createClient} from '@supabase/supabase-js';
+import {actor,create,req,cleanup,propertyInput,admin,config} from './contract-test-helpers.mjs';
+const a=await actor('agent1'),b=await actor('agent2'),owner=await actor('owner'),manager=await actor('manager'),other=await actor('other-owner');
+const fixtures={properties:[],customers:[]};let checks=0;const pass=x=>console.log('PASS',++checks,x);
+const staffBefore=(await admin.from('staff').select('id,display_name,updated_at').eq('id',a.staff.id).single()).data;
+try{
+ const anon=createClient(config.NEXT_PUBLIC_SUPABASE_URL,config.NEXT_PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false}});assert.ok((await anon.from('property_contacts').select('access_code,customer_id')).error);pass('anonymous direct REST cannot read contact/access code');
+ const property=await create('/api/properties',propertyInput('가상 간편고객 '+Date.now()),a);fixtures.properties.push(property.id);const path='/api/properties/'+property.id+'/contacts';
+ const input={name:'',phone:'010-0000-3456',phone2:'02-000-3456',access_code:'가상#1234'};
+ assert.equal((await req(path,'POST',input)).status,401);pass('anonymous registration blocked');
+ for(const phone of ['','abc','123'])assert.equal((await req(path,'POST',{...input,phone},a)).status,400);pass('phone1 required; invalid and short values rejected');
+ const created=await create(path,input,a);const read=await a.db.from('property_contacts').select('*,customers(*)').eq('id',created.id).single();assert.ifError(read.error);let link=read.data;fixtures.customers.push(link.customer_id);
+ assert.equal(link.customers.name,'');assert.equal(link.customers.phone2,input.phone2);assert.equal(link.access_code,input.access_code);assert.equal(link.customers.assigned_staff_id,a.staff.id);pass('phone-only customer created and linked atomically with optional phone2 and property access code');
+ assert.equal((await a.db.from('customer_property_links').select('property_id').eq('customer_id',link.customer_id)).data[0].property_id,property.id);pass('customer detail related-property view includes quick registration');
+ assert.equal((await req(path,'POST',input,b)).status,403);assert.equal((await req(path,'POST',input,other)).status,404);pass('non-assignee and foreign office cannot register');
+ assert.equal((await other.db.from('property_contacts').select('*').eq('id',link.id)).data.length,0);pass('foreign office cannot read phone or access code via direct REST');
+ const forbidden=await b.db.from('property_contacts').update({access_code:'changed'}).eq('id',link.id).select();assert.ifError(forbidden.error);assert.equal(forbidden.data.length,0);pass('direct RLS blocks non-assignee edits');
+ const edit={...input,name:'가상 고객',id:link.id,version:link.version,customer_version:link.customers.version};let r=await req(path,'POST',edit,a);assert.equal(r.status,200,await r.text());assert.equal((await req(path,'POST',edit,a)).status,409);pass('edit saves customer and link; stale versions rejected');
+ link=(await a.db.from('property_contacts').select('*,customers(*)').eq('id',link.id).single()).data;
+ r=await req(path,'POST',{...edit,version:link.version,customer_version:link.customers.version,access_code:'관리자 가상'},manager);assert.equal(r.status,200,await r.text());pass('manager can edit office contacts');
+ link=(await a.db.from('property_contacts').select('*,customers(*)').eq('id',link.id).single()).data;
+ const customerBefore=link.customers;assert.ifError((await a.db.from('customers').update({notes:'다른 화면 변경'}).eq('id',link.customer_id)).error);
+ r=await req(path,'POST',{...edit,name:'저장되면 안됨',version:link.version,customer_version:customerBefore.version},a);assert.equal(r.status,409);assert.equal((await a.db.from('customers').select('name').eq('id',link.customer_id).single()).data.name,'가상 고객');pass('concurrent customer edits reject whole transaction');
+ assert.equal((await req(path,'POST',{...input,office_id:other.staff.office_id},a)).status,400);pass('client office injection rejected');
+ const cross=await a.db.from('property_contacts').insert({office_id:a.staff.office_id,property_id:property.id,customer_id:'50000000-0000-0000-0000-000000000003'});assert.ok(cross.error);pass('cross-office customer link rejected at DB layer');
+ const changedTenant=await a.db.from('property_contacts').update({office_id:other.staff.office_id}).eq('id',link.id);assert.ok(changedTenant.error);pass('link identity/office cannot be changed directly');
+ let person=(await owner.db.from('staff').select('id,display_name,updated_at').eq('id',a.staff.id).single()).data;
+ assert.equal((await req('/api/staff/'+a.staff.id,'PATCH',{display_name:'가상 직원',updated_at:person.updated_at},a)).status,403);pass('agent cannot rename staff');
+ r=await req('/api/staff/'+a.staff.id,'PATCH',{display_name:'가상 직원',updated_at:person.updated_at},owner);assert.equal(r.status,200,await r.text());
+ assert.equal((await req('/api/staff/'+a.staff.id,'PATCH',{display_name:'중복 변경',updated_at:person.updated_at},owner)).status,409);pass('owner can rename with concurrent-change protection');
+ const role=(await owner.db.from('staff').update({role:'owner'}).eq('id',a.staff.id));assert.ok(role.error);const office=(await owner.db.from('staff').update({office_id:other.staff.office_id}).eq('id',a.staff.id));assert.ok(office.error);pass('name permission never permits role or office changes');
+ assert.equal((await req('/api/staff/'+a.staff.id,'PATCH',{display_name:'침입',updated_at:person.updated_at},other)).status,409);pass('foreign office cannot rename staff');
+ r=await req(path,'DELETE',{id:link.id,version:link.version},a);assert.equal(r.status,204);assert.ok((await a.db.from('customers').select('id').eq('id',link.customer_id).single()).data);pass('unlink preserves customer record');
+ console.log(checks+' property contacts/staff checks passed');
+}finally{
+ assert.ifError((await admin.from('staff').update({display_name:staffBefore.display_name}).eq('id',a.staff.id)).error);
+ if(fixtures.properties.length)assert.ifError((await admin.from('property_contacts').delete().in('property_id',fixtures.properties)).error);
+ await cleanup(fixtures);
+}
