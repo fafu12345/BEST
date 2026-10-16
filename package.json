@@ -19,6 +19,7 @@
     "test:contract-ui": "node scripts/test-contract-ui.mjs",
     "test:customers": "node scripts/test-customers.mjs",
     "test:customer-ui": "node scripts/test-customer-ui.mjs",
+    "test:seed-replay": "node scripts/test-seed-replay.mjs",
     "test:property-migration": "node scripts/test-property-migration.mjs",
     "test:customer-address-selection": "node scripts/test-customer-address-selection.mjs",
     "test:expiration": "node scripts/test-expiration.mjs",

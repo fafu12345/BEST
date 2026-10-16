@@ -1,3 +1,13 @@
+-- LOCAL DEVELOPMENT ONLY. Bootstrap an empty office database exactly once.
+-- BEFORE INSERT triggers run even when ON CONFLICT would skip a row.
+-- Never replay fixtures against modified, reassigned, archived, or operational data.
+do $estatematch_seed$
+begin
+ perform pg_advisory_xact_lock(714001);
+ if exists(select 1 from public.offices) then
+  raise notice 'Existing office data found; synthetic seed skipped. Existing data preserved.';
+  return;
+ end if;
 -- LOCAL DEVELOPMENT ONLY: synthetic users, reserved .test emails. No production PII.
 create extension if not exists pgcrypto with schema extensions;
 insert into auth.users(instance_id,id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at,confirmation_token,recovery_token,email_change,email_change_token_new)
@@ -53,3 +63,6 @@ insert into public.appointments(id,office_id,assigned_staff_id,property_id,custo
 insert into public.consultations(id,office_id,assigned_staff_id,property_id,customer_id,summary) values('a0000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000005','40000000-0000-0000-0000-000000000003','50000000-0000-0000-0000-000000000003','가상 상담') on conflict do nothing;
 insert into public.contracts(id,office_id,assigned_staff_id,property_id,customer_id,contract_number,amount) values('b0000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000005','40000000-0000-0000-0000-000000000003','50000000-0000-0000-0000-000000000003','TEST-3',100) on conflict do nothing;
 insert into public.tasks(id,office_id,assigned_staff_id,property_id,customer_id,title) values('c0000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','30000000-0000-0000-0000-000000000005','40000000-0000-0000-0000-000000000003','50000000-0000-0000-0000-000000000003','가상 할 일') on conflict do nothing;
+
+end
+$estatematch_seed$;

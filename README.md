@@ -12,7 +12,7 @@ bash scripts/start-local.sh
 npm run dev
 ```
 
-`start-local.sh`는 경량 PostgreSQL 17과 실제 Supabase Auth·PostgREST·Storage·Kong 컨테이너를 시작하고 마이그레이션과 가상 seed를 적용합니다. 외부 서비스 생성은 없습니다. 키와 DB 비밀번호는 로컬에서 생성해 무시되는 `local/.env`, `.env.local`에만 저장하며 기존 설정은 덮어쓰지 않습니다. API 포트는 루프백에만 열립니다.
+`start-local.sh`는 경량 PostgreSQL 17과 실제 Supabase Auth·PostgREST·Storage·Kong 컨테이너를 시작하고 미적용 마이그레이션을 적용하며, 사무소가 없는 빈 DB에만 가상 테스트 데이터를 넣습니다. 기존 사무소가 있으면 테스트 데이터를 다시 넣지 않아 삭제·수정한 자료를 그대로 보존합니다. 외부 서비스 생성은 없습니다. 키와 DB 비밀번호는 로컬에서 생성해 무시되는 `local/.env`, `.env.local`에만 저장하며 기존 설정은 덮어쓰지 않습니다. API 포트는 루프백에만 열립니다.
 
 이 환경의 Docker VFS 드라이버는 이미지 계층을 중복 저장합니다. 시작 스크립트는 VFS에서만 공식 Storage 이미지를 Docker 검증 후 내려받아 한 계층의 로컬 이미지로 변환합니다(`scripts/flatten-storage.py`). 공식 원본 태그는 변환 중 저장한 아카이브에서 내용을 보존한 뒤 제거해 공간을 확보합니다. 일반 overlay 드라이버에서는 공식 이미지를 그대로 사용합니다. 디스크가 제한된 환경에서 전체 Supabase CLI DB 이미지는 실행되지 않아 경량 구성을 기본으로 제공합니다.
 
