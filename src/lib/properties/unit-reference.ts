@@ -1,5 +1,19 @@
 // User-provided exclusive areas (㎡). These are reference data, not listings.
 export const unitReferences: Record<string, Record<string, number | null>> = {
+  '훼밀리상가': {
+    '101':84,'102':57,'103':57,'104':60,'105':63.75,'106':70.5,
+    '107':57,'108':57,'109':57,'110':57,'111':54,'112':59.25,
+    '113':55.5,'114':43.32,'115':43.32,'116':83.22,'117':53.64,
+    '118':59.33,'119':60.6,'120':100.01,'121':52.06,'122':55.48,
+    '123':75.96,'124':110.2,'125,125-A':62.48,
+    '126':52.06,'127':52.06,'128':76.72,'129':52.05,'130':44.03,
+    '131':44.03,'132':52.45,
+    '201':227.16,'202':120,'203':111,'204':114,'205':208.5,'206':111,
+    '207':263.73,'208':82.46,'209':82.46,'210':260.01,'211':113.22,
+    '212':96.39,'213':116.28,'214':116.28,'215':105.3,'216':124.8,'217':188.46,
+    '123-1':56.24,'123-2':56.24,'123-3':47.88,'123-3A':null,'123-3B':null,
+    '124-1':68.15,'124-2':81.18,'218-A':100.66,'218-B':16.52,
+  },
   '광장빌딩': {
     '101':21.45,'102':21.45,'103':21.45,'104':21.45,'105':21.45,
     '106':22.425,'107':22.75,'108':22.88,'109':22.88,'110':22.88,
@@ -140,9 +154,9 @@ unitReferences['주공공이'] = Object.fromEntries(Object.entries(jugongPyeong)
 export function referenceUnit(building: string, unit: string, propertyType: string, dong = '') {
   if (!['retail','office'].includes(propertyType) || dong.trim()) return null;
   const units = unitReferences[building.trim()];
-  const key = unit.trim().replace(/호$/, '').trim().toUpperCase().replace(/[～~]/g,'~').replace(/\s*~\s*/g,'~');
+  const key = unit.trim().replace(/호$/, '').trim().toUpperCase().replace(/[～~]/g,'~').replace(/\s*~\s*/g,'~').replace(/\s*[,，]\s*/g,',');
   if (!units || !Object.hasOwn(units,key)) return null;
-  const digits = /^(\d{3,})(?:-[A-Z0-9]+)?$/.exec(key.split('~')[0]);
+  const digits = /^(\d{3,})(?:-[A-Z0-9]+)?$/.exec(key.split(/[~,]/)[0]);
   // The supplied register uses 중101–중104; the user classifies them as floor 1.
   const original=units[key];
   const area=original===null?null:Math.round(original*100)/100;
