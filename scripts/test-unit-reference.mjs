@@ -23,7 +23,7 @@ assert.equal(lookup('다른건물','101','retail'),null);
 assert.equal(lookup('행운빌딩','999','retail'),null);
 assert.equal(lookup('행운빌딩','101','apartment'),null);
 assert.equal(lookup('행운빌딩','101','retail','A동'),null);
-console.log('PASS: 291 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
+console.log('PASS: 303 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
 
 assert.equal(Object.keys(data['주공공이']).length,63);
 assert.deepEqual(lookup('주공공이','101','retail'),{area_m2:66.12,floor:1});
@@ -49,8 +49,8 @@ assert.deepEqual(lookup('신세대상가','205-1','retail'),{area_m2:91.86,floor
 assert.deepEqual(lookup('신세대상가','205','retail'),{area_m2:24.72,floor:2});
 assert.deepEqual(lookup('신세대상가','301-1','retail'),{area_m2:54.94,floor:3});
 assert.deepEqual(lookup('신세대상가','506','retail'),{area_m2:143.76,floor:5});
-assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),291);
-console.log('PASS: Sinse-dae separate suffixed units and total 291 reference entries');
+assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),303);
+console.log('PASS: Sinse-dae separate suffixed units and total 303 reference entries');
 
 assert.equal(Object.keys(data['삼일프라자']).length,63);
 assert.deepEqual(lookup('삼일프라자','401-1','retail'),{area_m2:127.36,floor:4});
@@ -60,3 +60,11 @@ assert.deepEqual(lookup('삼일프라자','503','retail'),{area_m2:169.35,floor:
 assert.deepEqual(lookup('삼일프라자','121 ~ 122','retail'),{area_m2:18.56,floor:1});
 assert.equal(lookup('삼일프라자','121','retail'),null);
 console.log('PASS: Samil 63 entries, grouped units and separate subdivided units');
+
+assert.equal(Object.keys(data['씨티빌딩']).length,12);
+assert.deepEqual(lookup('씨티빌딩','101-1','retail'),{area_m2:43.02,floor:1});
+assert.deepEqual(lookup('씨티빌딩','101-2','retail'),{area_m2:21.94,floor:1});
+assert.deepEqual(lookup('씨티빌딩','303','retail'),{area_m2:37.34,floor:3});
+assert.deepEqual(lookup('씨티빌딩','502','retail'),{area_m2:151.62,floor:5});
+assert.equal(lookup('씨티빌딩','101','retail'),null);
+console.log('PASS: City building 12 entries and separate first-floor units');
