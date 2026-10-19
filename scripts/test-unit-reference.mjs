@@ -23,7 +23,7 @@ assert.equal(lookup('다른건물','101','retail'),null);
 assert.equal(lookup('행운빌딩','999','retail'),null);
 assert.equal(lookup('행운빌딩','101','apartment'),null);
 assert.equal(lookup('행운빌딩','101','retail','A동'),null);
-console.log('PASS: 405 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
+console.log('PASS: 452 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
 
 assert.equal(Object.keys(data['주공공이']).length,63);
 assert.deepEqual(lookup('주공공이','101','retail'),{area_m2:66.12,floor:1});
@@ -49,8 +49,8 @@ assert.deepEqual(lookup('신세대상가','205-1','retail'),{area_m2:91.86,floor
 assert.deepEqual(lookup('신세대상가','205','retail'),{area_m2:24.72,floor:2});
 assert.deepEqual(lookup('신세대상가','301-1','retail'),{area_m2:54.94,floor:3});
 assert.deepEqual(lookup('신세대상가','506','retail'),{area_m2:143.76,floor:5});
-assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),405);
-console.log('PASS: Sinse-dae separate suffixed units and total 405 reference entries');
+assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),452);
+console.log('PASS: Sinse-dae separate suffixed units and total 452 reference entries');
 
 assert.equal(Object.keys(data['삼일프라자']).length,63);
 assert.deepEqual(lookup('삼일프라자','401-1','retail'),{area_m2:127.36,floor:4});
@@ -89,3 +89,10 @@ for(const unit of ['304-1','304-2'])assert.deepEqual(lookup('무지개상가',un
 assert.deepEqual(lookup('무지개상가','505','retail'),{area_m2:243.55,floor:5});
 assert.equal(lookup('무지개상가','203','retail'),null);
 console.log('PASS: Rainbow 38 entries and distinct suffixed units');
+
+assert.equal(Object.keys(data['동아프라자']).length,47);
+for(const [unit,area] of [['105 ~ 106',16.74],['116~117',18.6],['125~126',7.44],['135~136',9.12]])assert.deepEqual(lookup('동아프라자',unit,'retail'),{area_m2:area,floor:1});
+for(const unit of ['204','208'])assert.deepEqual(lookup('동아프라자',unit,'retail'),{area_m2:null,floor:2});
+assert.deepEqual(lookup('동아프라자','207','retail'),{area_m2:115.42,floor:2});
+assert.equal(lookup('동아프라자','105','retail'),null);
+console.log('PASS: Donga 47 entries, four grouped units and missing areas');
