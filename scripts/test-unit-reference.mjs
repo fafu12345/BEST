@@ -16,14 +16,14 @@ for(const unit of ['중101','중102','중103','중104'])assert.equal(lookup('한
 for(const unit of ['205','206'])assert.deepEqual(lookup('한솔프라자',unit,'retail'),{area_m2:null,floor:2});
 assert.deepEqual(lookup('한솔프라자','501','retail'),{area_m2:1169.14,floor:5});
 for(const [building,units] of Object.entries(data))for(const [unit,area] of Object.entries(units)){
- const result=lookup(building,unit,'retail');assert.equal(result.area_m2,area);assert.ok(Number.isInteger(result.floor));
+ const result=lookup(building,unit,'retail');assert.equal(result.area_m2,area===null?null:Math.round(area*100)/100);assert.ok(Number.isInteger(result.floor));
  if(area!==null)assert.ok(area>0&&Number.isFinite(area));
 }
 assert.equal(lookup('다른건물','101','retail'),null);
 assert.equal(lookup('행운빌딩','999','retail'),null);
 assert.equal(lookup('행운빌딩','101','apartment'),null);
 assert.equal(lookup('행운빌딩','101','retail','A동'),null);
-console.log('PASS: 303 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
+console.log('PASS: 405 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
 
 assert.equal(Object.keys(data['주공공이']).length,63);
 assert.deepEqual(lookup('주공공이','101','retail'),{area_m2:66.12,floor:1});
@@ -49,8 +49,8 @@ assert.deepEqual(lookup('신세대상가','205-1','retail'),{area_m2:91.86,floor
 assert.deepEqual(lookup('신세대상가','205','retail'),{area_m2:24.72,floor:2});
 assert.deepEqual(lookup('신세대상가','301-1','retail'),{area_m2:54.94,floor:3});
 assert.deepEqual(lookup('신세대상가','506','retail'),{area_m2:143.76,floor:5});
-assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),303);
-console.log('PASS: Sinse-dae separate suffixed units and total 303 reference entries');
+assert.equal(Object.values(data).reduce((count,units)=>count+Object.keys(units).length,0),405);
+console.log('PASS: Sinse-dae separate suffixed units and total 405 reference entries');
 
 assert.equal(Object.keys(data['삼일프라자']).length,63);
 assert.deepEqual(lookup('삼일프라자','401-1','retail'),{area_m2:127.36,floor:4});
@@ -68,3 +68,24 @@ assert.deepEqual(lookup('씨티빌딩','303','retail'),{area_m2:37.34,floor:3});
 assert.deepEqual(lookup('씨티빌딩','502','retail'),{area_m2:151.62,floor:5});
 assert.equal(lookup('씨티빌딩','101','retail'),null);
 console.log('PASS: City building 12 entries and separate first-floor units');
+
+assert.equal(Object.keys(data['벌말프라자']).length,28);
+assert.equal(data['벌말프라자']['201'],61.875);
+assert.deepEqual(lookup('벌말프라자','201','retail'),{area_m2:61.88,original_area_m2:61.875,floor:2});
+assert.deepEqual(lookup('벌말프라자','505','retail'),{area_m2:80.8,floor:5});
+console.log('PASS: Beolmal 28 entries, original precision retained and compatible saved area');
+
+assert.equal(Object.keys(data['부림프라자']).length,36);
+assert.deepEqual(lookup('부림프라자','306-1','retail'),{area_m2:95,floor:3});
+assert.deepEqual(lookup('부림프라자','306','retail'),{area_m2:60,floor:3});
+assert.deepEqual(lookup('부림프라자','101','retail'),{area_m2:51.98,original_area_m2:51.975,floor:1});
+assert.deepEqual(lookup('부림프라자','208','retail'),{area_m2:104.53,original_area_m2:104.525,floor:2});
+assert.deepEqual(lookup('부림프라자','506','retail'),{area_m2:138.28,original_area_m2:138.275,floor:5});
+console.log('PASS: Burim 36 entries, separate units and three-decimal originals');
+
+assert.equal(Object.keys(data['무지개상가']).length,38);
+for(const unit of ['203-1','203-2'])assert.deepEqual(lookup('무지개상가',unit,'retail'),{area_m2:107.1,floor:2});
+for(const unit of ['304-1','304-2'])assert.deepEqual(lookup('무지개상가',unit,'retail'),{area_m2:144.74,floor:3});
+assert.deepEqual(lookup('무지개상가','505','retail'),{area_m2:243.55,floor:5});
+assert.equal(lookup('무지개상가','203','retail'),null);
+console.log('PASS: Rainbow 38 entries and distinct suffixed units');
