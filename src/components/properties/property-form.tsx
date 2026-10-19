@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { referenceUnit } from '@/lib/properties/unit-reference';
+import { referenceUnit, pyeongToM2, m2ToPyeong } from '@/lib/properties/unit-reference';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { directions, propertyInput, propertyTypes, transactionTypes, statuses, moneyLabel, wanToWon, wonToWan, areaLabel, dateLabel, propertyFinancials, type Property, type StaffOption, type BuildingOption } from '@/lib/properties/shared';
@@ -20,7 +20,9 @@ export function PropertyForm({ initial, staff, colleagues, buildings: initialBui
   const [price,setPrice] = useState(wonToWan(financial.salePrice));
   const [deposit,setDeposit] = useState(wonToWan(financial.deposit));
   const [rent,setRent] = useState(wonToWan(financial.monthlyRent));
-  const [area,setArea] = useState(String(initial?.area_m2 ?? ''));
+  const [area,setAreaM2] = useState(String(initial?.area_m2 ?? ''));
+  const [areaPyeong,setAreaPyeong] = useState(initial?.area_m2==null?'':String(m2ToPyeong(initial.area_m2)));
+  function setArea(value: string) {setAreaM2(value);setAreaPyeong(value===''?'':String(m2ToPyeong(Number(value))));}
   const [pending,setPending] = useState(false); const [error,setError] = useState('');
   const [candidates,setCandidates] = useState<Candidate[]>([]); const [allowDuplicate,setAllowDuplicate] = useState(false);
   const manager = ['owner','manager'].includes(staff.role);
@@ -98,7 +100,7 @@ export function PropertyForm({ initial, staff, colleagues, buildings: initialBui
         {['apartment','officetel'].includes(type) && <><label className="field md:col-span-2">동<input name="building_dong" maxLength={40} value={dong} onChange={e=>setDong(e.target.value)}/></label><label className="field">방 수<input name="room_count" type="number" min="0" max="100" defaultValue={initial?.room_count??''}/></label><label className="field">화장실 수<input name="bathroom_count" type="number" min="0" max="100" defaultValue={initial?.bathroom_count??''}/></label></>}
         {!['apartment','officetel','retail'].includes(type) && <label className="field md:col-span-2">주소<input name="address" required minLength={4} maxLength={500} defaultValue={initial?.address} onChange={()=>{setAllowDuplicate(false);setCandidates([]);}} placeholder="도로명 주소"/></label>}
         <div className="md:col-span-2 text-sm"><button type="button" disabled={looking||!unit.trim()} className="text-teal-800 underline" onClick={async()=>{setLooking(true);setLookupMessage('');try{const r=await fetch('/api/property-buildings/'+buildingId+'/unit?'+new URLSearchParams({unit,dong}));const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.area_m2!==null)setArea(String(d.area_m2));if(d.floor!==null)setFloor(String(d.floor));if(d.total_floors!==null)setTotalFloors(String(d.total_floors));setLookupMessage((d.source==='building_reference'?'건물별 기본정보':'같은 사무소에 등록된 호실 정보')+'를 불러왔습니다. 실제 면적과 층수를 확인하세요.');}catch(e){setLookupMessage(e instanceof Error?e.message:'조회 실패');}finally{setLooking(false);}}}>등록된 호실 정보 불러오기</button>{lookupMessage&&<p role="status" className="hint mt-2">{lookupMessage}</p>}{type==='retail'&&<p className="hint mt-2">건물 주소: {selected.address||'건물별 호실 보기에서 대표·관리자가 입력할 수 있습니다.'}</p>}</div>
-        <label className="field">전용면적 (㎡)<input name="area_m2" type="number" min="0.01" step="0.01" required value={area} onChange={e=>setArea(e.target.value)}/><span className="hint">{area?areaLabel(Number(area)):'전용면적을 입력하면 평으로 환산합니다.'}</span></label>
+        <label className="field">전용면적 ({selected.name.trim()==='주공공이'?'평':'㎡'})<input name={selected.name.trim()==='주공공이'?'area_pyeong':'area_m2'} type="number" min="0.01" step="0.01" required value={selected.name.trim()==='주공공이'?areaPyeong:area} onChange={e=>{if(selected.name.trim()==='주공공이'){setAreaPyeong(e.target.value);setAreaM2(e.target.value===''?'':String(pyeongToM2(Number(e.target.value))));}else setArea(e.target.value);}}/><span className="hint">{area?areaLabel(Number(area)):selected.name.trim()==='주공공이'?'평으로 입력하면 ㎡로 자동 환산합니다.':'전용면적을 입력하면 평으로 환산합니다.'}</span></label>
         <label className="field">방향 (선택)<select name="direction" aria-label="방향" defaultValue={initial?.direction??''}><option value="">선택 안 함</option>{Object.entries(directions).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="field">거래 상태<select name="status" defaultValue={initial?.status??'available'}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         <label className="field">해당 층<input name="floor" type="number" min="-20" max="300" value={floor} onChange={e=>{setFloor(e.target.value);setAllowDuplicate(false);}}/><span className="hint">지하는 -1, -2와 같이 입력</span></label>
         <label className="field">전체 층<input name="total_floors" type="number" min="1" max="300" value={totalFloors} onChange={e=>setTotalFloors(e.target.value)}/></label>

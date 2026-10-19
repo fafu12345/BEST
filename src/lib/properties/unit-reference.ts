@@ -1,5 +1,26 @@
 // User-provided exclusive areas (㎡). These are reference data, not listings.
 export const unitReferences: Record<string, Record<string, number | null>> = {
+  '신세대상가': {
+    '205-1':91.86,'301-1':54.94,
+    '101':42.37,'102':42.37,'103':42.37,'104':34.2,'105':32.68,
+    '106':42.37,'107':42.37,'108':110.2,'109':25.46,'110':25.46,
+    '111':28.12,'112':28.12,'113':36.48,
+    '201':119.28,'202':81.9,'203':82.68,'204':124.08,'205':24.72,
+    '206':192.2,'207':74.04,'208':128.94,
+    '301':108.56,'302':81.9,'303':73.32,'304':123.84,'305':176.18,
+    '306':88.2,'307':78.96,'308':133.44,
+    '401':193.6,'402':117.78,'403':142.68,'404':194.68,'405':126.84,'406':143.76,
+    '501':193.6,'502':117.78,'503':142.68,'504':194.68,'505':126.84,'506':143.76,
+  },
+  '아이파크상가': {
+    '101':84.2,'102':null,'103~104':27.28,'105':27.28,'106':32.54,
+    '107':32.4,'108':28.8,'109':32.78,'110':36.94,'111':36.86,
+    '112':36.83,'113':28.8,'114':25.38,'115':26.03,
+    '201':64.9,'202':39.14,'203':30.6,'204':30.6,'205':40.22,
+    '206':34.6,'207':38.6,'208':38.6,'209~210':38.6,'211':38.6,
+    '212':42.94,'213':148.28,'214':30.05,'215':33.31,'216':25.12,
+    '217':39.4,'218':41.25,
+  },
   '행운빌딩': {
     '101':20.45,'102':20.45,'103':20.45,'104':20.45,'105':22.62,'106':22.62,
     '201':97.59,'202':81.78,'203':135.84,
@@ -26,12 +47,30 @@ export const unitReferences: Record<string, Record<string, number | null>> = {
     '501':1169.14,
   },
 };
+// Original pyeong values are retained; the database uses square metres.
+export const jugongPyeong: Record<string, number | null> = {
+  '101':20,'104':18,'105':45,'106':13.7,'107':20.6,'108':20,'109':11,
+  '110':36,'111':18,'112':18,'113':60,'114':13,'115':15,'116':12.5,
+  '117':13,'118':69,'119':10.5,'120~121':25.5,'122':20,'123':9.5,
+  '124':11,'125':18,'126~127':34,'128':11,'129':10.73,'130':12.28,
+  '131':11.11,'132':9.62,'133':4.01,'134':6.49,'135':7.31,'136':6.66,
+  '137':10.50,'138':null,'139':5.53,'140':null,'141':6.50,'142':6.50,
+  '143':5.05,'102~103':24,'110-2':3.4,'110-3~110-4':20,'118-1':13,
+  '128-1':6.5,'129-1':6.5,
+  '201':52.76,'202':36.97,'203':63.80,'204':33.12,'205':41.77,
+  '206':41.88,'207':41.88,'208':41.60,'209':80.19,'210':52.76,
+  '211':27.26,'212':35.07,'213':68.94,'214':null,'215':29.82,
+  '216':27.26,'217':48.93,'218':29.99,
+};
+export const pyeongToM2 = (value: number) => Math.round(value * 3.305785 * 100) / 100;
+export const m2ToPyeong = (value: number) => Math.round(value / 3.305785 * 100) / 100;
+unitReferences['주공공이'] = Object.fromEntries(Object.entries(jugongPyeong).map(([unit,area])=>[unit,area===null?null:pyeongToM2(area)]));
 export function referenceUnit(building: string, unit: string, propertyType: string, dong = '') {
   if (!['retail','office'].includes(propertyType) || dong.trim()) return null;
   const units = unitReferences[building.trim()];
-  const key = unit.trim().replace(/호$/, '').trim().toUpperCase();
+  const key = unit.trim().replace(/호$/, '').trim().toUpperCase().replace(/[～~]/g,'~').replace(/\s*~\s*/g,'~');
   if (!units || !Object.hasOwn(units,key)) return null;
-  const digits = /^(\d{3,})(?:-[A-Z0-9]+)?$/.exec(key);
+  const digits = /^(\d{3,})(?:-[A-Z0-9]+)?$/.exec(key.split('~')[0]);
   // The supplied register uses 중101–중104; the user classifies them as floor 1.
   return {area_m2:units[key],floor:building.trim()==='한솔프라자' && /^중10[1-4]$/.test(key) ? 1 : digits ? Math.floor(Number(digits[1])/100) : null};
 }
