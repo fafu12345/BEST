@@ -23,4 +23,4 @@ assert.equal(lookup('다른건물','101','retail'),null);
 assert.equal(lookup('행운빌딩','999','retail'),null);
 assert.equal(lookup('행운빌딩','101','apartment'),null);
 assert.equal(lookup('행운빌딩','101','retail','A동'),null);
-console.log('PASS: 66 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
+console.log('PASS: 91 reference units, areas, inferred floors, special labels, missing areas, building/type isolation');
