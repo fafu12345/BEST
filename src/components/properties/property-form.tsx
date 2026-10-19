@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { referenceUnit } from '@/lib/properties/unit-reference';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { directions, propertyInput, propertyTypes, transactionTypes, statuses, moneyLabel, wanToWon, wonToWan, areaLabel, dateLabel, propertyFinancials, type Property, type StaffOption, type BuildingOption } from '@/lib/properties/shared';
@@ -84,11 +85,19 @@ export function PropertyForm({ initial, staff, colleagues, buildings: initialBui
     </section>
     {selected && <>
       <section className="panel"><h2 className="section-title">2. 호실 · 기본 정보</h2><p className="mb-5 font-semibold text-teal-800">{selected.name}</p><div className="form-grid">
-        <label className="field">호실<input name="unit_number" maxLength={40} value={unit} onChange={e=>setUnit(e.target.value)} placeholder="예: 201, 1001"/></label>
+        <label className="field">호실<input name="unit_number" maxLength={40} value={unit} onChange={e=>setUnit(e.target.value)} onBlur={()=>{
+          if (!selected) return;
+          const info=referenceUnit(selected.name,unit,type,dong);
+          if (!info) return;
+          setArea(info.area_m2===null?'':String(info.area_m2));
+          setFloor(info.floor===null?'':String(info.floor));
+          setAllowDuplicate(false);setCandidates([]);
+          setLookupMessage('건물별 기본정보를 불러왔습니다.'+(info.area_m2===null?' 면적은 미등록 상태입니다. 직접 입력하세요.':'')+(info.floor===null?' 층수는 확인 후 입력하세요.':' 호실에서 추정한 층수를 확인하세요.'));
+        }} placeholder="예: 201, 1001"/></label>
         {type==='retail' && <label className="field">상호<input name="store_name" maxLength={200} defaultValue={initial?.store_name} placeholder="예: 한솔카페 (공실이면 비워두세요)"/></label>}
         {['apartment','officetel'].includes(type) && <><label className="field md:col-span-2">동<input name="building_dong" maxLength={40} value={dong} onChange={e=>setDong(e.target.value)}/></label><label className="field">방 수<input name="room_count" type="number" min="0" max="100" defaultValue={initial?.room_count??''}/></label><label className="field">화장실 수<input name="bathroom_count" type="number" min="0" max="100" defaultValue={initial?.bathroom_count??''}/></label></>}
         {!['apartment','officetel','retail'].includes(type) && <label className="field md:col-span-2">주소<input name="address" required minLength={4} maxLength={500} defaultValue={initial?.address} onChange={()=>{setAllowDuplicate(false);setCandidates([]);}} placeholder="도로명 주소"/></label>}
-        <div className="md:col-span-2 text-sm"><button type="button" disabled={looking||!unit.trim()} className="text-teal-800 underline" onClick={async()=>{setLooking(true);setLookupMessage('');try{const r=await fetch('/api/property-buildings/'+buildingId+'/unit?'+new URLSearchParams({unit,dong}));const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.area_m2!==null)setArea(String(d.area_m2));if(d.floor!==null)setFloor(String(d.floor));if(d.total_floors!==null)setTotalFloors(String(d.total_floors));setLookupMessage('같은 사무소에 등록된 호실 정보를 불러왔습니다. 실제 면적과 층수를 확인하세요.');}catch(e){setLookupMessage(e instanceof Error?e.message:'조회 실패');}finally{setLooking(false);}}}>등록된 호실 정보 불러오기</button>{lookupMessage&&<p role="status" className="hint mt-2">{lookupMessage}</p>}{type==='retail'&&<p className="hint mt-2">건물 주소: {selected.address||'건물별 호실 보기에서 대표·관리자가 입력할 수 있습니다.'}</p>}</div>
+        <div className="md:col-span-2 text-sm"><button type="button" disabled={looking||!unit.trim()} className="text-teal-800 underline" onClick={async()=>{setLooking(true);setLookupMessage('');try{const r=await fetch('/api/property-buildings/'+buildingId+'/unit?'+new URLSearchParams({unit,dong}));const d=await r.json();if(!r.ok)throw new Error(d.error);if(d.area_m2!==null)setArea(String(d.area_m2));if(d.floor!==null)setFloor(String(d.floor));if(d.total_floors!==null)setTotalFloors(String(d.total_floors));setLookupMessage((d.source==='building_reference'?'건물별 기본정보':'같은 사무소에 등록된 호실 정보')+'를 불러왔습니다. 실제 면적과 층수를 확인하세요.');}catch(e){setLookupMessage(e instanceof Error?e.message:'조회 실패');}finally{setLooking(false);}}}>등록된 호실 정보 불러오기</button>{lookupMessage&&<p role="status" className="hint mt-2">{lookupMessage}</p>}{type==='retail'&&<p className="hint mt-2">건물 주소: {selected.address||'건물별 호실 보기에서 대표·관리자가 입력할 수 있습니다.'}</p>}</div>
         <label className="field">전용면적 (㎡)<input name="area_m2" type="number" min="0.01" step="0.01" required value={area} onChange={e=>setArea(e.target.value)}/><span className="hint">{area?areaLabel(Number(area)):'전용면적을 입력하면 평으로 환산합니다.'}</span></label>
         <label className="field">방향 (선택)<select name="direction" aria-label="방향" defaultValue={initial?.direction??''}><option value="">선택 안 함</option>{Object.entries(directions).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="field">거래 상태<select name="status" defaultValue={initial?.status??'available'}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         <label className="field">해당 층<input name="floor" type="number" min="-20" max="300" value={floor} onChange={e=>{setFloor(e.target.value);setAllowDuplicate(false);}}/><span className="hint">지하는 -1, -2와 같이 입력</span></label>
